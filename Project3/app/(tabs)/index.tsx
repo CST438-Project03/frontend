@@ -32,9 +32,6 @@ export default function WelcomeScreen() {
     <LinearGradient colors={['#000000', '#808080']} style={styles.container}>
       <View style={styles.overlay}>
         {/* App Logo */}
-        {/* <View style={styles.logoContainer}>
-          <MaterialIcons name="leaderboard" size={60} color="#BB86FC" />
-        </View> */}
         
         <Text style={styles.title}>Welcome to GameStack!</Text>
         <Text style={styles.subtitle}> need to add something here</Text>
@@ -81,7 +78,7 @@ export default function WelcomeScreen() {
         
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Rank anything. Share everything.
+            Play games. Rate Games. Share your experience.
           </Text>
         </View>
       </View>

@@ -39,51 +39,6 @@ export default function HomeScreen() {
         <Text style={styles.title}>Welcome to the home page!</Text>
         <Text style={styles.subtitle}> need to add something here</Text>
         
-        <View style={styles.buttonContainer}>
-          {/* Login Button */}
-          <Animated.View 
-            style={[
-              styles.buttonWrapper, 
-              { transform: [{ scale: loginButtonScale }] }
-            ]}
-          >
-            <TouchableOpacity 
-              style={styles.loginButton}
-              onPress={() => router.replace('/login')}
-              onPressIn={() => handlePressIn(loginButtonScale)}
-              onPressOut={() => handlePressOut(loginButtonScale)}
-              activeOpacity={0.8}
-            >
-              <MaterialIcons name="login" size={20} color="white" style={styles.buttonIcon} />
-              <Text style={styles.buttonText}>Login</Text>
-            </TouchableOpacity>
-          </Animated.View>
-
-          {/* Create Account Button */}
-          <Animated.View 
-            style={[
-              styles.buttonWrapper, 
-              { transform: [{ scale: createButtonScale }] }
-            ]}
-          >
-            <TouchableOpacity 
-              style={styles.createAccountButton}
-              onPress={() => router.push('/createAccount')}
-              onPressIn={() => handlePressIn(createButtonScale)}
-              onPressOut={() => handlePressOut(createButtonScale)}
-              activeOpacity={0.8}
-            >
-              <MaterialIcons name="person-add" size={20} color="white" style={styles.buttonIcon} />
-              <Text style={styles.buttonText}>Create Account</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-        
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Rank anything. Share everything.
-          </Text>
-        </View>
       </View>
     </LinearGradient>
   );
