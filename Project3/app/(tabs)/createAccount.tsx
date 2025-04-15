@@ -1,10 +1,23 @@
-
-
 import React, { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { View, Text, StyleSheet, TextInput, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TextInput, 
+  ActivityIndicator, 
+  TouchableOpacity, 
+  Platform, 
+  Dimensions,
+  ScrollView,
+  KeyboardAvoidingView,
+  SafeAreaView
+} from 'react-native';
 import { useRouter } from 'expo-router';
 
+const windowWidth = Dimensions.get('window').width;
+const windowHeight = Dimensions.get('window').height;
+const isWeb = Platform.OS === 'web';
 
 interface UserCredentials {
   username: string;
@@ -107,7 +120,7 @@ const CreateAccount: React.FC = () => {
       params.append('email', email);
       params.append('password', password);
       
-      const createResponse = await fetch('http://localhost:8080/auth/register', {
+      const createResponse = await fetch('http://localhost:8080/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -168,133 +181,156 @@ const CreateAccount: React.FC = () => {
   };
 
   return (
-    <LinearGradient colors={['#000000', '#808080']} style={styles.container}>
-      <View style={styles.overlay}>
-        <Text style={styles.title}>Create an Account</Text>
-
-        {/* Username field with label */}
-        <Text style={styles.inputLabel}>Please enter username</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Username"
-          placeholderTextColor="#999"
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        
-        {/* Email field with label */}
-        <Text style={styles.inputLabel}>Please enter email</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#999"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        
-        {/* Password field with label */}
-        <Text style={styles.inputLabel}>Please enter password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#999"
-          value={password}
-          onChangeText={handlePasswordChange}
-          secureTextEntry
-        />
-        
-        {/* Password requirements feedback */}
-        {passwordFeedback && (
-          <Text style={[
-            styles.passwordFeedback, 
-            passwordFeedback.includes('✓') ? styles.validFeedback : styles.invalidFeedback
-          ]}>
-            {passwordFeedback}
-          </Text>
-        )}
-        
-        {/* Password requirements info */}
-        <Text style={styles.passwordRequirements}>
-          Password must contain at least 6 characters, include both letters and numbers, 
-          and have at least one special character.
-        </Text>
-        
-        {/* Confirm Password field with label */}
-        <Text style={styles.inputLabel}>Please re-enter your password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Confirm Password"
-          placeholderTextColor="#999"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-        />
-
-        {error && <Text style={styles.error}>{error}</Text>}
-
-        {/* Enhanced Create Account Button */}
-        <TouchableOpacity
-          style={[styles.createButton, isLoading && styles.createButtonDisabled]}
-          onPress={handleCreateAccount}
-          disabled={isLoading}
-          activeOpacity={0.8}
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={['#000000', '#808080']} style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}
         >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.createButtonText}>Create Account</Text>
-          )}
-        </TouchableOpacity>
-        
-        {/* Login section */}
-        <View style={styles.loginContainer}>
-          <Text style={styles.loginText}>Already have an account?</Text>
-          <TouchableOpacity onPress={navigateToLogin}>
-            <Text style={styles.loginLink}>Login here</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </LinearGradient>
+          <ScrollView 
+            contentContainerStyle={styles.scrollViewContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.overlay}>
+              <Text style={styles.title}>Create an Account</Text>
+
+              {/* Username field with label */}
+              <Text style={styles.inputLabel}>Please enter username</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Username"
+                placeholderTextColor="#999"
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              
+              {/* Email field with label */}
+              <Text style={styles.inputLabel}>Please enter email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor="#999"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              
+              {/* Password field with label */}
+              <Text style={styles.inputLabel}>Please enter password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor="#999"
+                value={password}
+                onChangeText={handlePasswordChange}
+                secureTextEntry
+              />
+              
+              {/* Password requirements feedback */}
+              {passwordFeedback && (
+                <Text style={[
+                  styles.passwordFeedback, 
+                  passwordFeedback.includes('✓') ? styles.validFeedback : styles.invalidFeedback
+                ]}>
+                  {passwordFeedback}
+                </Text>
+              )}
+              
+              {/* Password requirements info */}
+              <Text style={styles.passwordRequirements}>
+                Password must contain at least 6 characters, include both letters and numbers, 
+                and have at least one special character.
+              </Text>
+              
+              {/* Confirm Password field with label */}
+              <Text style={styles.inputLabel}>Please re-enter your password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm Password"
+                placeholderTextColor="#999"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+              />
+
+              {error && <Text style={styles.error}>{error}</Text>}
+
+              {/* Enhanced Create Account Button */}
+              <TouchableOpacity
+                style={[styles.createButton, isLoading && styles.createButtonDisabled]}
+                onPress={handleCreateAccount}
+                disabled={isLoading}
+                activeOpacity={0.8}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.createButtonText}>Create Account</Text>
+                )}
+              </TouchableOpacity>
+              
+              {/* Login section */}
+              <View style={styles.loginContainer}>
+                <Text style={styles.loginText}>Already have an account?</Text>
+                <TouchableOpacity onPress={navigateToLogin}>
+                  <Text style={styles.loginLink}>Login here</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </LinearGradient>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 30,
   },
   overlay: {
-    padding: 40,
+    padding: isWeb ? 40 : 20,
     borderRadius: 15,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     alignItems: 'center',
-    width: '60%',
-    maxWidth: 600,
+    width: isWeb ? '80%' : '85%',
+    minWidth: isWeb ? 480 : 'auto',
+    maxWidth: isWeb ? 600 : '100%',
   },
   title: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: 'bold',
     color: 'white',
-    marginBottom: 30,
+    marginBottom: 20, 
     textAlign: 'center',
   },
   inputLabel: {
     alignSelf: 'flex-start',
     color: 'white',
-    marginBottom: 8,
+    marginBottom: 6, 
     fontWeight: '500',
-    fontSize: 18,
+    fontSize: 16, 
   },
   input: {
     width: '100%',
-    padding: 15,
-    marginBottom: 20,
+    padding: 12, 
+    marginBottom: 16, 
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 10,
@@ -309,7 +345,7 @@ const styles = StyleSheet.create({
   },
   passwordFeedback: {
     alignSelf: 'flex-start',
-    marginBottom: 10,
+    marginBottom: 8, 
     fontSize: 14,
   },
   validFeedback: {
@@ -322,12 +358,12 @@ const styles = StyleSheet.create({
     color: '#aaa',
     fontSize: 12,
     alignSelf: 'flex-start',
-    marginBottom: 20,
+    marginBottom: 16,
     fontStyle: 'italic',
   },
   createButton: {
     backgroundColor: '#BB86FC',
-    paddingVertical: 15,
+    paddingVertical: 14, 
     paddingHorizontal: 30,
     borderRadius: 10,
     width: '100%',
@@ -343,7 +379,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   loginContainer: {
-    marginTop: 20,
+    marginTop: 16, 
     flexDirection: 'row',
     alignItems: 'center',
   },

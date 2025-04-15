@@ -1,104 +1,153 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { View, Text, StyleSheet, TextInput, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TextInput, 
+  ActivityIndicator, 
+  TouchableOpacity,
+  Platform,
+  Dimensions,
+  ScrollView,
+  KeyboardAvoidingView,
+  SafeAreaView
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { routeToScreen } from 'expo-router/build/useScreens';
+
+// Get device width for responsive sizing
+const windowWidth = Dimensions.get('window').width;
+const isWeb = Platform.OS === 'web';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const router = useRouter();
 
+  const handleLogin = () => {
+    router.push('/home');
+  };
+
+  const handleCreateAccount = () => {
+    router.push('/createAccount');
+  };
 
   return (
-    <LinearGradient colors={['#000000', '#808080']} style={styles.container}>
-      <View style={styles.overlay}>
-        <Text style={styles.title}>Login to GameStack</Text>
-
-        {/* Username field */}
-        <Text style={styles.inputLabel}>Please enter username</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Username"
-          placeholderTextColor="#999"
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-
-        {/* Password field */}
-        <Text style={styles.inputLabel}>Please enter password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#999"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-
-        {/* Login Button */}
-        <TouchableOpacity
-          style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
-          onPress={() => useRouter().push('/home')}
-          disabled={isLoading}
-          activeOpacity={0.8}
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={['#000000', '#808080']} style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidView}
         >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.loginButtonText}>Login</Text>
-          )}
-        </TouchableOpacity>
+          <ScrollView 
+            contentContainerStyle={styles.scrollContainer}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.overlay}>
+              <Text style={styles.title}>Login to GameStack</Text>
 
-        {/* Create account section */}
-        <View style={styles.createAccountContainer}>
-          <Text style={styles.createAccountText}>Don't have an account?</Text>
-          <TouchableOpacity onPress={() => useRouter().push('/createAccount')}>
-            <Text style={styles.createAccountLink}>Create an account here</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </LinearGradient>
+              {/* Username field */}
+              <Text style={styles.inputLabel}>Please enter username</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Username"
+                placeholderTextColor="#999"
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+
+              {/* Password field */}
+              <Text style={styles.inputLabel}>Please enter password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor="#999"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+
+              {error ? <Text style={styles.error}>{error}</Text> : null}
+
+              {/* Login Button */}
+              <TouchableOpacity
+                style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+                onPress={handleLogin}
+                disabled={isLoading}
+                activeOpacity={0.8}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.loginButtonText}>Login</Text>
+                )}
+              </TouchableOpacity>
+
+              {/* Create account section */}
+              <View style={styles.createAccountContainer}>
+                <Text style={styles.createAccountText}>Don't have an account?</Text>
+                <TouchableOpacity onPress={handleCreateAccount}>
+                  <Text style={styles.createAccountLink}>Create an account here</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </LinearGradient>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
+  },
+  keyboardAvoidView: {
+    flex: 1,
+    width: '100%',
+  },
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    width: '100%',
+    paddingVertical: 30,
   },
   overlay: {
-    padding: 40,
+    padding: isWeb ? 40 : 20,
     borderRadius: 15,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     alignItems: 'center',
-    width: '60%',
-    maxWidth: 600,
+    width: isWeb ? '80%' : '85%',
+    minWidth: isWeb ? 480 : 'auto',
+    maxWidth: isWeb ? 600 : '100%',
   },
   title: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: 'bold',
     color: 'white',
-    marginBottom: 30,
+    marginBottom: 20,
     textAlign: 'center',
   },
   inputLabel: {
     alignSelf: 'flex-start',
     color: 'white',
-    marginBottom: 8,
+    marginBottom: 6,
     fontWeight: '500',
-    fontSize: 18,
+    fontSize: 16,
   },
   input: {
     width: '100%',
-    padding: 15,
-    marginBottom: 20,
+    padding: 12,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 10,
@@ -113,7 +162,7 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     backgroundColor: '#BB86FC',
-    paddingVertical: 15,
+    paddingVertical: 14,
     paddingHorizontal: 30,
     borderRadius: 10,
     width: '100%',
@@ -129,7 +178,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   createAccountContainer: {
-    marginTop: 20,
+    marginTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
   },
