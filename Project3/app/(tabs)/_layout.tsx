@@ -20,16 +20,14 @@ const API_URL: string = isWeb
   ? 'http://localhost:8080' 
   : 'http://10.0.2.2:8080';
 
-// Dark theme colors
-const darkThemeColors = {
-  background: '#121212',
-  surface: '#1E1E1E',
-  text: '#FFFFFF',
-  textSecondary: '#AAAAAA',
-  accent: '#BB86FC',
-  borderColor: 'rgba(255, 255, 255, 0.1)',
-  danger: '#CF6679',
-};
+// Define custom colors
+const backgroundColor = '#afafaf';
+const surfaceColor = '#afafaf';
+const textColor = '#FFFFFF';
+const textSecondaryColor = '#AAAAAA';
+const accentColor = '#BB86FC';
+const borderColor = 'rgba(255, 255, 255, 0.1)';
+const dangerColor = '#CF6679';
 
 // Type for Material Icons names
 type MaterialIconName = React.ComponentProps<typeof MaterialIcons>['name'];
@@ -95,7 +93,7 @@ function DropdownHeader() {
         return;
       }
       
-      // Try to get admin status from your API
+      // Call API to check admin status
       try {
         const response = await fetch(`${API_URL}/api/user/me`, {
           method: 'GET',
@@ -129,14 +127,14 @@ function DropdownHeader() {
     // Toggle menu closed
     setMenuOpen(false);
     
-    // Clear token immediately (synchronously) on web
+    // Clear token on web
     if (isWeb) {
       localStorage.removeItem('jwtToken');
       localStorage.removeItem('userId');
       localStorage.removeItem('username');
       localStorage.removeItem('lastLogin');
       
-      // Get token for API call (before we cleared it)
+      // Get token for API call
       const token = localStorage.getItem('jwtToken');
       
       // Call logout API in background
@@ -153,9 +151,7 @@ function DropdownHeader() {
       // Update state and navigate
       setIsLoggedIn(false);
       router.push('/' as any);
-    } 
-    // For mobile, use async operations but still be direct
-    else {
+    } else {
       AsyncStorage.getItem('jwtToken')
         .then(token => {
           // Clear storage
@@ -207,7 +203,7 @@ function DropdownHeader() {
         await AsyncStorage.setItem('lastLogin', refreshTimestamp);
       }
       
-      // Navigate to profile with refresh parameter
+      // Navigate to profile 
       router.push({
         pathname: '/userProfile' as any,
         params: { refresh: refreshTimestamp }
@@ -226,7 +222,10 @@ function DropdownHeader() {
     const items: NavigationItem[] = [];
     
     // Welcome/Home items always shown
-    items.push({ name: 'index', title: 'Welcome', icon: 'waving-hand' });
+    items.push({ name: 'index', title: 'Welcome', icon: 'waving-hand',   action: () => {
+      // You can trigger navigation to the index page here
+      router.push('/');
+    } });
     items.push({ name: 'home', title: 'Home', icon: 'home' });
     
     // Items shown when logged out
@@ -288,12 +287,11 @@ function DropdownHeader() {
   // Navigate to a screen
   const navigateTo = (item: NavigationItem) => {
     if (item.special && typeof item.action === 'function') {
-      // Use custom action (like for profile with refresh or logout)
       item.action();
     } else {
       // Regular navigation
       router.push(`/${item.name}` as any);
-      toggleMenu(); // Close menu
+      toggleMenu(); 
     }
   };
 
@@ -310,11 +308,8 @@ function DropdownHeader() {
   return (
     <View style={styles.container}>
       {/* Header Bar */}
-      <View style={[
-        styles.header,
-        { backgroundColor: darkThemeColors.background }
-      ]}>
-        <Text style={[styles.title, { color: darkThemeColors.text }]}>
+      <View style={[styles.header, { backgroundColor: 'rgba(117, 110, 110, 0.7)' }]}>
+        <Text style={[styles.title, { color: textColor }]}>
           My App
         </Text>
         
@@ -325,47 +320,41 @@ function DropdownHeader() {
             style={styles.menuButton}
           >
             {menuOpen ? (
-              <MaterialIcons name="close" size={24} color={darkThemeColors.text} />
+              <MaterialIcons name="close" size={24} color={textColor} />
             ) : (
-              <MaterialIcons name="menu" size={24} color={darkThemeColors.text} />
+              <MaterialIcons name="menu" size={24} color={textColor} />
             )}
           </TouchableOpacity>
         </View>
       </View>
       
       {/* Dropdown Menu */}
-      <Animated.View style={[
-        styles.menuContainer,
-        { 
-          height: animatedHeight,
-          backgroundColor: darkThemeColors.surface,
-          borderBottomColor: darkThemeColors.borderColor
-        }
-      ]}>
+      <Animated.View style={[styles.menuContainer, { 
+        height: animatedHeight, 
+        backgroundColor: 'rgba(181, 167, 167, 0.7)', 
+        borderBottomColor: borderColor
+      }]}>
         <ScrollView style={{ width: '100%' }}>
           {navigationItems.map(item => (
             <TouchableOpacity
               key={item.name}
-              style={[
+              style={[ 
                 styles.menuItem,
                 isActive(item.name) && { backgroundColor: 'rgba(187, 134, 252, 0.12)' },
-                item.danger && { borderLeftColor: darkThemeColors.danger, borderLeftWidth: 4 }
+                item.danger && { borderLeftColor: dangerColor, borderLeftWidth: 4 }
               ]}
               onPress={() => navigateTo(item)}
             >
               <MaterialIcons 
                 name={item.icon} 
                 size={24} 
-                color={item.danger ? darkThemeColors.danger : 
-                      isActive(item.name) ? darkThemeColors.accent : darkThemeColors.text} 
+                color={item.danger ? dangerColor : 
+                      isActive(item.name) ? accentColor : textColor} 
               />
-              <Text style={[
-                styles.menuItemText,
-                { 
-                  color: item.danger ? darkThemeColors.danger :
-                        isActive(item.name) ? darkThemeColors.accent : darkThemeColors.text,
-                  fontWeight: isActive(item.name) ? 'bold' : 'normal'
-                }
+              <Text style={[ 
+                styles.menuItemText, 
+                { color: item.danger ? dangerColor : 
+                        isActive(item.name) ? accentColor : textColor }
               ]}>
                 {item.title}
               </Text>
@@ -383,7 +372,7 @@ export default function AppLayout() {
     <Stack
       screenOptions={{
         header: () => <DropdownHeader />,
-        contentStyle: { backgroundColor: darkThemeColors.background },
+        contentStyle: { backgroundColor: backgroundColor },
         animation: 'fade',
       }}
     >
@@ -416,7 +405,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: darkThemeColors.borderColor,
+    borderBottomColor: borderColor,
   },
   headerControls: {
     flexDirection: 'row',
@@ -433,17 +422,18 @@ const styles = StyleSheet.create({
     width: '100%',
     overflow: 'hidden',
     borderBottomWidth: 1,
+    borderBottomColor: borderColor,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 16,
+    paddingLeft: 16,
     borderBottomWidth: 1,
-    borderBottomColor: darkThemeColors.borderColor,
+    borderBottomColor: borderColor,
   },
   menuItemText: {
-    marginLeft: 16,
+    marginLeft: 12,
     fontSize: 16,
   },
 });
