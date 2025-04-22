@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs } from 'expo-router';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Platform, TouchableOpacity, Alert, Text, View } from 'react-native';
+import { Stack } from 'expo-router';
+import { 
+  Platform, 
+  TouchableOpacity, 
+  Text, 
+  View, 
+  StyleSheet, 
+  Animated,
+  ScrollView 
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 const isWeb: boolean = Platform.OS === 'web';
 
@@ -12,10 +20,39 @@ const API_URL: string = isWeb
   ? 'http://localhost:8080' 
   : 'http://10.0.2.2:8080';
 
-export default function TabLayout() {
+// Dark theme colors
+const darkThemeColors = {
+  background: '#121212',
+  surface: '#1E1E1E',
+  text: '#FFFFFF',
+  textSecondary: '#AAAAAA',
+  accent: '#BB86FC',
+  borderColor: 'rgba(255, 255, 255, 0.1)',
+  danger: '#CF6679',
+};
+
+// Type for Material Icons names
+type MaterialIconName = React.ComponentProps<typeof MaterialIcons>['name'];
+
+// Type for Navigation Items
+type NavigationItem = {
+  name: string;
+  title: string;
+  icon: MaterialIconName;
+  special?: boolean;
+  action?: () => void;
+  danger?: boolean;
+};
+
+// DropdownHeader Component
+function DropdownHeader() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [menuOpen, setMenuOpen] = useState<boolean>(false);
+  const [animatedHeight] = useState(new Animated.Value(0));
+  
   const router = useRouter();
+  const pathname = usePathname();
 
   // Check login status and admin status
   useEffect(() => {
@@ -85,9 +122,12 @@ export default function TabLayout() {
     }
   };
 
-  // Simple direct logout function
+  // Direct logout function
   const handleLogout = (): void => {
     console.log("Logout button clicked");
+    
+    // Toggle menu closed
+    setMenuOpen(false);
     
     // Clear token immediately (synchronously) on web
     if (isWeb) {
@@ -112,7 +152,7 @@ export default function TabLayout() {
       
       // Update state and navigate
       setIsLoggedIn(false);
-      router.push('/');
+      router.push('/' as any);
     } 
     // For mobile, use async operations but still be direct
     else {
@@ -150,7 +190,7 @@ export default function TabLayout() {
         .finally(() => {
           // Always update state and navigate
           setIsLoggedIn(false);
-          router.push('/');
+          router.push('/' as any);
         });
     }
   };
@@ -169,125 +209,241 @@ export default function TabLayout() {
       
       // Navigate to profile with refresh parameter
       router.push({
-        pathname: '/userProfile',
+        pathname: '/userProfile' as any,
         params: { refresh: refreshTimestamp }
       });
+      
+      // Close menu after navigation
+      toggleMenu();
     } catch (error) {
       console.error('Error navigating to profile:', error);
-      router.push('/userProfile');
+      router.push('/userProfile' as any);
     }
   };
 
-  // Custom header right component with logout button
-  const LogoutButton = (): React.ReactNode => (
-    <TouchableOpacity 
-      onPress={handleLogout}
-      style={{ 
-        marginRight: 15, 
-        backgroundColor: '#CF6679',  // Red shade for danger
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 4
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <MaterialIcons name="logout" size={16} color="#FFFFFF" />
-        <Text style={{ color: '#FFFFFF', marginLeft: 4, fontWeight: 'bold' }}>
-          Logout
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
+  // Get navigation items based on login/admin status
+  const getNavigationItems = (): NavigationItem[] => {
+    const items: NavigationItem[] = [];
+    
+    // Welcome/Home items always shown
+    items.push({ name: 'index', title: 'Welcome', icon: 'waving-hand' });
+    items.push({ name: 'home', title: 'Home', icon: 'home' });
+    
+    // Items shown when logged out
+    if (!isLoggedIn) {
+      items.push({ name: 'login', title: 'Login', icon: 'login' });
+      items.push({ name: 'createAccount', title: 'Sign Up', icon: 'person-add' });
+    }
+    
+    // Items shown when logged in
+    if (isLoggedIn) {
+      items.push({ 
+        name: 'userProfile', 
+        title: 'Profile', 
+        icon: 'person', 
+        special: true, 
+        action: navigateToProfile 
+      });
+      
+      // Admin panel if admin
+      if (isAdmin) {
+        items.push({ 
+          name: 'admin', 
+          title: 'Admin Panel', 
+          icon: 'admin-panel-settings' 
+        });
+      }
+      
+      // Logout option
+      items.push({ 
+        name: 'logout', 
+        title: 'Logout', 
+        icon: 'logout', 
+        special: true, 
+        action: handleLogout, 
+        danger: true 
+      });
+    }
+    
+    return items;
+  };
+
+  // Toggle menu function with animation
+  const toggleMenu = () => {
+    const items = getNavigationItems();
+    const itemHeight = 50; // Height of each menu item
+    const targetHeight = menuOpen ? 0 : items.length * itemHeight;
+    
+    console.log("Toggling menu. Items:", items.length, "Target height:", targetHeight);
+    
+    Animated.timing(animatedHeight, {
+      toValue: targetHeight,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+    
+    setMenuOpen(!menuOpen);
+  };
+
+  // Navigate to a screen
+  const navigateTo = (item: NavigationItem) => {
+    if (item.special && typeof item.action === 'function') {
+      // Use custom action (like for profile with refresh or logout)
+      item.action();
+    } else {
+      // Regular navigation
+      router.push(`/${item.name}` as any);
+      toggleMenu(); // Close menu
+    }
+  };
+
+  // Check if a route is active
+  const isActive = (routeName: string) => {
+    if (!pathname) return false;
+    // Get the first segment of the path
+    const currentRoute = pathname.substring(1).split('/')[0] || '';
+    return currentRoute === routeName;
+  };
+
+  const navigationItems = getNavigationItems();
 
   return (
-    <Tabs
-      screenOptions={{
-        // Dark theme colors
-        tabBarStyle: {
-          backgroundColor: '#121212', 
-          borderTopColor: '#333',
-        },
-        tabBarActiveTintColor: '#BB86FC',
-        tabBarInactiveTintColor: '#808080',
-        headerStyle: {
-          backgroundColor: '#121212',
-        },
-        headerTintColor: '#FFFFFF',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-        // Add logout button to all screens when logged in
-        headerRight: isLoggedIn ? () => <LogoutButton /> : undefined
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Welcome',
-          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="waving-hand" color={color} />,
-        }}
-      />
+    <View style={styles.container}>
+      {/* Header Bar */}
+      <View style={[
+        styles.header,
+        { backgroundColor: darkThemeColors.background }
+      ]}>
+        <Text style={[styles.title, { color: darkThemeColors.text }]}>
+          My App
+        </Text>
+        
+        <View style={styles.headerControls}>
+          {/* Hamburger Menu Button */}
+          <TouchableOpacity 
+            onPress={toggleMenu}
+            style={styles.menuButton}
+          >
+            {menuOpen ? (
+              <MaterialIcons name="close" size={24} color={darkThemeColors.text} />
+            ) : (
+              <MaterialIcons name="menu" size={24} color={darkThemeColors.text} />
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
       
-      {/* Only show Login if not logged in */}
-      {!isLoggedIn && (
-        <Tabs.Screen
-          name="login"
-          options={{
-            title: 'Login',
-            tabBarIcon: ({ color }) => <MaterialIcons size={28} name="login" color={color} />,
-          }}
-        />
-      )}
-      
-      {/* Only show Sign Up if not logged in */}
-      {!isLoggedIn && (
-        <Tabs.Screen
-          name="createAccount"
-          options={{
-            title: 'Sign Up',
-            tabBarIcon: ({ color }) => <MaterialIcons size={28} name="person-add" color={color} />,
-          }}
-        />
-      )}
-      
-      {/* Always show Home */}
-      <Tabs.Screen
-        name="home"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="home" color={color} />,
-        }}
-      />
-      
-      {/* Only show Profile if logged in */}
-      {isLoggedIn && (
-        <Tabs.Screen
-          name="userProfile"
-          options={{
-            title: 'Profile',
-            tabBarIcon: ({ color }) => <MaterialIcons size={28} name="person" color={color} />,
-          }}
-          listeners={{
-            tabPress: (e) => {
-              // Prevent default navigation
-              e.preventDefault();
-              // Use custom navigation with refresh parameter
-              navigateToProfile();
-            },
-          }}
-        />
-      )}
-      
-      {/* Show Admin panel only for admin users */}
-      {isLoggedIn && isAdmin && (
-        <Tabs.Screen
-          name="admin"
-          options={{
-            title: 'Admin',
-            tabBarIcon: ({ color }) => <MaterialIcons size={28} name="admin-panel-settings" color={color} />,
-          }}
-        />
-      )}
-    </Tabs>
+      {/* Dropdown Menu */}
+      <Animated.View style={[
+        styles.menuContainer,
+        { 
+          height: animatedHeight,
+          backgroundColor: darkThemeColors.surface,
+          borderBottomColor: darkThemeColors.borderColor
+        }
+      ]}>
+        <ScrollView style={{ width: '100%' }}>
+          {navigationItems.map(item => (
+            <TouchableOpacity
+              key={item.name}
+              style={[
+                styles.menuItem,
+                isActive(item.name) && { backgroundColor: 'rgba(187, 134, 252, 0.12)' },
+                item.danger && { borderLeftColor: darkThemeColors.danger, borderLeftWidth: 4 }
+              ]}
+              onPress={() => navigateTo(item)}
+            >
+              <MaterialIcons 
+                name={item.icon} 
+                size={24} 
+                color={item.danger ? darkThemeColors.danger : 
+                      isActive(item.name) ? darkThemeColors.accent : darkThemeColors.text} 
+              />
+              <Text style={[
+                styles.menuItemText,
+                { 
+                  color: item.danger ? darkThemeColors.danger :
+                        isActive(item.name) ? darkThemeColors.accent : darkThemeColors.text,
+                  fontWeight: isActive(item.name) ? 'bold' : 'normal'
+                }
+              ]}>
+                {item.title}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </Animated.View>
+    </View>
   );
 }
+
+// Main Layout Component
+export default function AppLayout() {
+  return (
+    <Stack
+      screenOptions={{
+        header: () => <DropdownHeader />,
+        contentStyle: { backgroundColor: darkThemeColors.background },
+        animation: 'fade',
+      }}
+    >
+      <Stack.Screen name="index" options={{ headerShown: true }} />
+      <Stack.Screen name="home" options={{ headerShown: true }} />
+      <Stack.Screen name="login" options={{ headerShown: true }} />
+      <Stack.Screen name="createAccount" options={{ headerShown: true }} />
+      <Stack.Screen name="userProfile" options={{ headerShown: true }} />
+      <Stack.Screen name="admin" options={{ headerShown: true }} />
+    </Stack>
+  );
+}
+
+// Styles
+const styles = StyleSheet.create({
+  container: {
+    zIndex: 100,
+    width: '100%',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  header: {
+    height: Platform.OS === 'ios' ? 90 : 60,
+    paddingTop: Platform.OS === 'ios' ? 40 : 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: darkThemeColors.borderColor,
+  },
+  headerControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  menuButton: {
+    padding: 8,
+  },
+  menuContainer: {
+    width: '100%',
+    overflow: 'hidden',
+    borderBottomWidth: 1,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: darkThemeColors.borderColor,
+  },
+  menuItemText: {
+    marginLeft: 16,
+    fontSize: 16,
+  },
+});

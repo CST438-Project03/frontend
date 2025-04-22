@@ -29,7 +29,7 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <LinearGradient colors={['#000000', '#808080']} style={styles.container}>
+    <LinearGradient colors={['#121212', '#2a2a2a']} style={styles.container}>
       <View style={styles.overlay}>
         {/* App Logo */}
         

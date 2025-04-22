@@ -182,7 +182,7 @@ const CreateAccount: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <LinearGradient colors={['#000000', '#808080']} style={styles.container}>
+      <LinearGradient colors={['#121212', '#2a2a2a']} style={styles.container}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidingView}
