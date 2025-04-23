@@ -120,34 +120,53 @@ export default function GameDetails() {
 
   const fetchUserLists = async () => {
     try {
+      const token = await AsyncStorage.getItem('jwtToken');
+
       const response = await fetch('http://localhost:8080/api/lists/getUserLists', {
         method: 'GET',
-        credentials: 'include',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-
         },
       });
+
       const data = await response.json();
+      console.log('User Lists API Response:', data); //  log here
+
       if (response.ok) {
         setLists(data.lists || []);
-        setListModalVisible(true);
       } else {
         Alert.alert('Error', data.message || 'Could not fetch lists.');
       }
     } catch (error) {
-      console.error(error);
+      console.error('Fetch user lists failed:', error);
       Alert.alert('Error', 'Failed to fetch user lists.');
     }
   };
 
   const handleAddGameToList = async () => {
+    if (!selectedListId) {
+      Alert.alert('Please select a list');
+      return;
+    }
+  
     try {
+      const token = await AsyncStorage.getItem('jwtToken');
+      if (!token) {
+        Alert.alert('Authentication Error', 'You are not logged in.');
+        return;
+      }
+  
       const res = await fetch(`http://localhost:8080/api/lists/addGame/${selectedListId}/games/${id}`, {
         method: 'POST',
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
       });
+  
       const data = await res.json();
+  
       if (!res.ok) {
         Alert.alert('Error', data.message || 'Failed to add game.');
       } else {
@@ -159,8 +178,7 @@ export default function GameDetails() {
       Alert.alert('Error', 'Something went wrong.');
     }
   };
-
-
+  
 
   return (
     <>
@@ -188,7 +206,15 @@ export default function GameDetails() {
           </View>
           <View style={{ width: 10 }} />
           <View style={styles.equalButton}>
-            <Button title="Add to List" onPress={() => setListModalVisible(true)} color="#BB86FC" />
+            <Button
+              title="Add to List"
+              onPress={async () => {
+                await fetchUserLists();
+                setListModalVisible(true);
+              }}
+              color="#BB86FC"
+            />
+
           </View>
         </View>
 
@@ -226,11 +252,20 @@ export default function GameDetails() {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Select a List</Text>
+
             {lists.map((list) => (
-              <TouchableOpacity key={list.id} onPress={() => setSelectedListId(list.id)} style={{ padding: 10 }}>
-                <Text style={{ color: '#fff' }}>{list.name}</Text>
+              <TouchableOpacity
+                key={list.id}
+                onPress={() => setSelectedListId(list.id)}
+                style={[
+                  styles.listCard,
+                  selectedListId === list.id && styles.listCardSelected
+                ]}
+              >
+                <Text style={styles.listCardText}>{list.name}</Text>
               </TouchableOpacity>
             ))}
+
             <View style={styles.modalButtons}>
               <Button title="Add" onPress={handleAddGameToList} color={'#BB86FC'} />
               <Button title="Cancel" onPress={() => setListModalVisible(false)} color="red" />
@@ -369,4 +404,24 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: 'center',
   },
+  listCard: {
+    backgroundColor: '#333',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#555',
+  },
+
+  listCardSelected: {
+    borderColor: '#BB86FC',
+    backgroundColor: '#444',
+  },
+
+  listCardText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+
 });
