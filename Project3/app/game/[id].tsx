@@ -5,6 +5,9 @@ import { router } from 'expo-router';
 import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, Modal, TextInput, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ToastAndroid, Platform } from 'react-native';
+
 
 
 export default function GameDetails() {
@@ -77,11 +80,13 @@ export default function GameDetails() {
     }
 
     try {
+      const token = await AsyncStorage.getItem('jwtToken'); // Get the stored JWT
+
       const res = await fetch(`http://localhost:8080/api/reviews/create/game/${id}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          // Add your auth token here if needed
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: `Bearer ${token}`, // Add the token here
         },
         body: new URLSearchParams({
           rating: numRating.toString(),
@@ -94,7 +99,7 @@ export default function GameDetails() {
       if (!res.ok) {
         Alert.alert('Error', data.message || 'Failed to submit review.');
       } else {
-        Alert.alert('Success', 'Review submitted successfully!');
+        showToast('Review submitted successfully!');
         setModalVisible(false);
         setRating('');
         setComment('');
@@ -102,6 +107,14 @@ export default function GameDetails() {
     } catch (error) {
       Alert.alert('Error', 'Something went wrong.');
       console.error(error);
+    }
+  };
+
+  const showToast = (message) => {
+    if (Platform.OS === 'android' && ToastAndroid) {
+      ToastAndroid.show(message, ToastAndroid.SHORT);
+    } else {
+      Alert.alert('Notice', message); // Web
     }
   };
 
@@ -157,15 +170,27 @@ export default function GameDetails() {
         </TouchableOpacity>
 
         <Image source={{ uri: game.imageUrl }} style={styles.gameImage} />
-        <Text style={styles.title}>{game.title}</Text>
-        <Text style={styles.genre}>Genre: {game.genre}</Text>
-        <Text style={styles.info}>Release Date: {game.releaseDate}</Text>
-        <Text style={styles.info}>Rating: {game.rating}</Text>
-        <Text style={styles.info}>Platforms: {game.platforms}</Text>
-        <Text style={styles.info}>Developers: {game.developers}</Text>
-        <Text style={styles.description}>{game.description}</Text>
-        <Button title="Write a Review" onPress={() => setModalVisible(true)} color="#BB86FC" />
-        <Button title="Add to List" onPress={() => setListModalVisible(true)} color="#BB86FC" />
+        <View style={styles.gameInfoCard}>
+          <Text style={styles.cardTitle}>{game.title}</Text>
+          <View style={{ height: 1, backgroundColor: '#444', marginVertical: 10 }} />
+          <Text style={styles.genre}>Genre: {game.genre}</Text>
+          <Text style={styles.info}>Release Date: {game.releaseDate}</Text>
+          <Text style={styles.info}>Rating: {game.rating}</Text>
+          <Text style={styles.info}>Platforms: {game.platforms}</Text>
+          <Text style={styles.info}>Developers: {game.developers}</Text>
+          <Text style={styles.description}>{game.description}</Text>
+        </View>
+
+
+        <View style={styles.actionButtons}>
+          <View style={styles.equalButton}>
+            <Button title="Write a Review" onPress={() => setModalVisible(true)} color="#BB86FC" />
+          </View>
+          <View style={{ width: 10 }} />
+          <View style={styles.equalButton}>
+            <Button title="Add to List" onPress={() => setListModalVisible(true)} color="#BB86FC" />
+          </View>
+        </View>
 
       </ScrollView>
 
@@ -175,7 +200,7 @@ export default function GameDetails() {
             <Text style={styles.modalTitle}>Submit a Review</Text>
             <TextInput
               style={styles.input}
-              placeholder="Rating (1–10)"
+              placeholder="Rating (1–5)"
               keyboardType="numeric"
               value={rating}
               onChangeText={setRating}
@@ -190,7 +215,7 @@ export default function GameDetails() {
               placeholderTextColor="#999"
             />
             <View style={styles.modalButtons}>
-              <Button title="Submit" onPress={handleSubmitReview} color={'#BB86FC'}/>
+              <Button title="Submit" onPress={handleSubmitReview} color={'#BB86FC'} />
               <Button title="Cancel" onPress={() => setModalVisible(false)} color="red" />
             </View>
           </View>
@@ -207,7 +232,7 @@ export default function GameDetails() {
               </TouchableOpacity>
             ))}
             <View style={styles.modalButtons}>
-              <Button title="Add" onPress={handleAddGameToList} color={'#BB86FC'}/>
+              <Button title="Add" onPress={handleAddGameToList} color={'#BB86FC'} />
               <Button title="Cancel" onPress={() => setListModalVisible(false)} color="red" />
             </View>
           </View>
@@ -256,9 +281,10 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: 'white',
-    textAlign: 'justify',
-    marginTop: 20,
+    color: '#e0e0e0',
+    textAlign: 'left',
+    marginTop: 15,
+    lineHeight: 22,
   },
   errorText: {
     fontSize: 18,
@@ -294,7 +320,7 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-  
+
   },
   backButton: {
     position: 'absolute',
@@ -305,6 +331,42 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 20,
   },
-
-
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: 320,
+    alignSelf: 'center',
+    marginTop: 20,
+  },
+  buttonWrapper: {
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  equalButton: {
+    flex: 1,
+    alignSelf: 'stretch',
+  },
+  gameInfoCard: {
+    backgroundColor: 'rgba(40, 40, 40, 0.8)',
+    padding: 20,
+    borderRadius: 15,
+    marginTop: 20,
+    width: '90%',
+    alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  cardTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#BB86FC',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
 });
