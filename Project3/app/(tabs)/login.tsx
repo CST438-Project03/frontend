@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Image } from 'react-native';
 
 // Get device width for responsive sizing
 const windowWidth = Dimensions.get('window').width;
@@ -160,7 +161,9 @@ const Login: React.FC = () => {
   };
   return (
     <SafeAreaView style={styles.safeArea}>
-      <LinearGradient colors={['#121212', '#2a2a2a']} style={styles.container}>
+      <LinearGradient colors={['#3a1c71', '#d76d77', '#ffaf7b']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }} style={styles.container}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidView}
