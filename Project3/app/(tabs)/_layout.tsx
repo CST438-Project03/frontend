@@ -17,13 +17,16 @@ export default function TabLayout() {
         options={{
           title: 'Login',
           tabBarIcon: ({ color }) => <MaterialIcons size={28} name="login" color={color} />,
+          href: null,
         }}
       />
       <Tabs.Screen
         name="createAccount"
         options={{
+          
           title: 'Sign Up',
           tabBarIcon: ({ color }) => <MaterialIcons size={28} name="add-circle" color={color} />,
+          href: null,
         }}
       />
       <Tabs.Screen
@@ -40,6 +43,14 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="list" size={size} color={color} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="oauth-callback"
+
+        options={{
+          title: 'OAuth Callback', 
+          href: null,
         }}
       />
     </Tabs>

@@ -45,6 +45,9 @@ const UserProfile = () => {
   const [emailModalVisible, setEmailModalVisible] = useState(false);
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
+  const [isOAuthUser, setIsOAuthUser] = useState(false);
+  const [hasSetPassword, setHasSetPassword] = useState(false);
+  const [oauthProvider, setOauthProvider] = useState('');
   
   // State for form inputs
   const [oldUsername, setOldUsername] = useState('');
@@ -104,6 +107,18 @@ const UserProfile = () => {
         username: response.data.username || '',
         email: response.data.email || ''
       });
+
+      const oauthStatusResponse = await axios.get(`${API_URL}/user/password/status`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (oauthStatusResponse.data) {
+        setIsOAuthUser(oauthStatusResponse.data.isOAuthUser);
+        setHasSetPassword(oauthStatusResponse.data.hasSetPassword);
+        setOauthProvider(oauthStatusResponse.data.oauthProvider);
+      }
       
       // Store user data in AsyncStorage/localStorage
       if (response.data.username) {
@@ -301,7 +316,10 @@ const UserProfile = () => {
   const handlePasswordUpdate = async () => {
     setError('');
     try {
-      if (!currentPassword.trim()) {
+      // Skip current password check for OAuth users who haven't set a password yet
+      const skipCurrentPasswordCheck = isOAuthUser && !hasSetPassword;
+      
+      if (!skipCurrentPasswordCheck && !currentPassword.trim()) {
         setError('Current password is required');
         return;
       }
@@ -326,10 +344,16 @@ const UserProfile = () => {
         return;
       }
       
-      await axios.put(`${API_URL}/user/password`, {
-        currentPassword,
-        newPassword
-      }, {
+      // Use different endpoint for OAuth users setting password for the first time
+      const endpoint = skipCurrentPasswordCheck 
+        ? `${API_URL}/user/password/create` 
+        : `${API_URL}/user/password`;
+      
+      const data = skipCurrentPasswordCheck
+        ? { newPassword }
+        : { currentPassword, newPassword };
+      
+      await axios.post(endpoint, data, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -339,6 +363,11 @@ const UserProfile = () => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      
+      // Update hasSetPassword state
+      if (skipCurrentPasswordCheck) {
+        setHasSetPassword(true);
+      }
       
       Alert.alert('Success', 'Password updated successfully');
     } catch (error) {
@@ -434,6 +463,15 @@ const UserProfile = () => {
               </View>
               
               <Text style={styles.welcomeText}>Welcome, {userData.username}!</Text>
+
+              {/*OAuth badge */}
+              {isOAuthUser && (
+                <View style={styles.oauthBadge}>
+                  <Text style={styles.oauthBadgeText}>
+                    Signed in with {oauthProvider.charAt(0).toUpperCase() + oauthProvider.slice(1)}
+                  </Text>
+                </View>
+          )}
               
               <View style={styles.profileInfo}>
                 <View style={styles.infoRow}>
@@ -469,19 +507,25 @@ const UserProfile = () => {
                 </View>
                 
                 <View style={styles.passwordRow}>
-                  <Text style={styles.passwordText}>Change your password</Text>
+                  <Text style={styles.passwordText}>
+                    {isOAuthUser && !hasSetPassword 
+                    ? `Set password for direct login (you currently use ${oauthProvider} to sign in)`
+                    : 'Change your password'}
+                  </Text>
                   <TouchableOpacity
-                    style={styles.passwordButton}
-                    onPress={() => {
-                      setCurrentPassword('');
-                      setNewPassword('');
-                      setConfirmPassword('');
-                      setError('');
-                      setPasswordModalVisible(true);
-                    }}
+                  style={styles.passwordButton}
+                  onPress={() => {
+                    setCurrentPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                    setError('');
+                    setPasswordModalVisible(true);
+                  }}
                   >
-                    <Text style={styles.passwordButtonText}>Reset Password</Text>
-                  </TouchableOpacity>
+                 <Text style={styles.passwordButtonText}>
+                  {isOAuthUser && !hasSetPassword ? 'Set Password' : 'Reset Password'}
+                 </Text>
+                 </TouchableOpacity>
                 </View>
                 
                 <View style={styles.dangerZone}>
@@ -628,74 +672,90 @@ const UserProfile = () => {
         </Modal>
         
         {/* Password Reset Modal */}
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={passwordModalVisible}
-          onRequestClose={() => setPasswordModalVisible(false)}
+<Modal
+  animationType="slide"
+  transparent={true}
+  visible={passwordModalVisible}
+  onRequestClose={() => setPasswordModalVisible(false)}
+>
+  <View style={styles.modalContainer}>
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>
+        {isOAuthUser && !hasSetPassword ? 'Set Password' : 'Reset Password'}
+      </Text>
+      
+      {/* Only show current password field if not a first-time OAuth password setup */}
+      {!(isOAuthUser && !hasSetPassword) && (
+        <>
+          <Text style={styles.inputLabel}>Current Password</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter current password"
+            placeholderTextColor="#999"
+            value={currentPassword}
+            onChangeText={setCurrentPassword}
+            secureTextEntry
+          />
+        </>
+      )}
+      
+      <Text style={styles.inputLabel}>New Password</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter new password"
+        placeholderTextColor="#999"
+        value={newPassword}
+        onChangeText={setNewPassword}
+        secureTextEntry
+      />
+      
+      <Text style={styles.inputLabel}>Confirm New Password</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Re-enter new password"
+        placeholderTextColor="#999"
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        secureTextEntry
+      />
+      
+      {isOAuthUser && !hasSetPassword && (
+        <Text style={styles.infoText}>
+          Setting a password will allow you to log in directly with your email and password,
+          in addition to using {oauthProvider} authentication.
+        </Text>
+      )}
+      
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      
+      <View style={styles.modalButtons}>
+        <TouchableOpacity
+          style={[styles.modalButton, styles.cancelButton]}
+          onPress={() => {
+            setPasswordModalVisible(false);
+            setError('');
+          }}
         >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Reset Password</Text>
-              
-              <Text style={styles.inputLabel}>Current Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter current password"
-                placeholderTextColor="#999"
-                value={currentPassword}
-                onChangeText={setCurrentPassword}
-                secureTextEntry
-              />
-              
-              <Text style={styles.inputLabel}>New Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter new password"
-                placeholderTextColor="#999"
-                value={newPassword}
-                onChangeText={setNewPassword}
-                secureTextEntry
-              />
-              
-              <Text style={styles.inputLabel}>Confirm New Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Re-enter new password"
-                placeholderTextColor="#999"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-              />
-              
-              {error ? <Text style={styles.errorText}>{error}</Text> : null}
-              
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={() => {
-                    setPasswordModalVisible(false);
-                    setError('');
-                  }}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.saveButton, isLoading && styles.disabledButton]}
-                  onPress={handlePasswordUpdate}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator size="small" color="#121212" />
-                  ) : (
-                    <Text style={styles.saveButtonText}>Save</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+          <Text style={styles.cancelButtonText}>Cancel</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.modalButton, styles.saveButton, isLoading && styles.disabledButton]}
+          onPress={handlePasswordUpdate}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#121212" />
+          ) : (
+            <Text style={styles.saveButtonText}>
+              {isOAuthUser && !hasSetPassword ? 'Create' : 'Save'}
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+</Modal>
         
         {/* Delete Account Modal */}
         <Modal
@@ -1091,6 +1151,26 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  // Add these to your styles
+oauthBadge: {
+  backgroundColor: '#3a3a3a',
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 20,
+  alignSelf: 'flex-start',
+  marginBottom: 15,
+},
+oauthBadgeText: {
+  color: '#BB86FC',
+  fontWeight: '600',
+},
+infoText: {
+  color: '#b0b0b0',
+  fontSize: 14,
+  marginTop: 10,
+  marginBottom: 15,
+  textAlign: 'center',
+},
 });
 
 export default UserProfile;
