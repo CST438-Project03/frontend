@@ -1,0 +1,115 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  TextInput,
+  FlatList,
+  Text,
+  StyleSheet,
+  Image,
+  Dimensions,
+  Keyboard,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+
+export default function SearchScreen() {
+  const [query, setQuery] = useState('');
+  const [games, setGames] = useState([]);
+
+  const BASE_URL = 'http://localhost:8080/api/games/search';
+
+  const fetchGames = async (searchText: string) => {
+    if (!searchText) return;
+    try {
+      const response = await fetch(`${BASE_URL}?query=${encodeURIComponent(searchText)}`);
+      const data = await response.json();
+      setGames(data);
+    } catch (error) {
+      console.error('Search error:', error);
+    }
+  };
+
+  const handleSearch = () => {
+    fetchGames(query);
+    Keyboard.dismiss();
+  };
+
+  const renderGameItem = ({ item }: any) => (
+    <View style={styles.gameCard}>
+      <Image source={{ uri: item.imageUrl }} style={styles.gameImage} />
+      <Text style={styles.gameTitle}>{item.title}</Text>
+    </View>
+  );
+
+  return (
+    <LinearGradient colors={['#000000', '#808080']} style={styles.container}>
+      <View style={styles.overlay}>
+        <Text style={styles.title}>Search Games</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter a game name..."
+          placeholderTextColor="#ccc"
+          value={query}
+          onChangeText={setQuery}
+          onSubmitEditing={handleSearch}
+        />
+        <FlatList
+          data={games}
+          renderItem={renderGameItem}
+          keyExtractor={(item, index) => index.toString()}
+          numColumns={2}
+          contentContainerStyle={styles.gamesContainer}
+        />
+      </View>
+    </LinearGradient>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  overlay: {
+    padding: 30,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    alignItems: 'center',
+    width: '90%',
+    maxWidth: 600,
+    flex: 1,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 10,
+  },
+  input: {
+    width: '100%',
+    height: 45,
+    backgroundColor: '#222',
+    color: 'white',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    marginBottom: 20,
+  },
+  gamesContainer: {
+    alignItems: 'center',
+    paddingBottom: 20,
+  },
+  gameCard: {
+    flex: 1,
+    margin: 10,
+    alignItems: 'center',
+    maxWidth: Dimensions.get('window').width / 2 - 30,
+  },
+  gameImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 10,
+  },
+  gameTitle: {
+    marginTop: 10,
+    fontSize: 14,
+    color: 'white',
+    textAlign: 'center',
+  },
+});
+

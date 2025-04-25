@@ -9,7 +9,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ToastAndroid, Platform } from 'react-native';
 
 
-
 export default function GameDetails() {
   const { id } = useLocalSearchParams();
   const [game, setGame] = useState(null);
@@ -66,6 +65,7 @@ export default function GameDetails() {
       </View>
     );
   }
+
   const handleSubmitReview = async () => {
     const numRating = parseInt(rating);
 
@@ -275,8 +275,6 @@ export default function GameDetails() {
       </Modal>
 
     </>
-
-
 
   );
 }
