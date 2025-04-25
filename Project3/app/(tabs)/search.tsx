@@ -41,13 +41,16 @@ export default function SearchScreen() {
   );
 
   return (
-    <LinearGradient colors={['#000000', '#808080']} style={styles.container}>
+    <LinearGradient colors={['#3a1c71', '#d76d77', '#ffaf7b']}
+    start={{ x: 0, y: 0 }}
+    end={{ x: 1, y: 1 }}style={styles.container}>
       <View style={styles.overlay}>
         <Text style={styles.title}>Search Games</Text>
         <TextInput
+          
           style={styles.input}
           placeholder="Enter a game name..."
-          placeholderTextColor="#ccc"
+          placeholderTextColor='rgba(20, 18, 18, 0.87)'
           value={query}
           onChangeText={setQuery}
           onSubmitEditing={handleSearch}
@@ -69,7 +72,7 @@ const styles = StyleSheet.create({
   overlay: {
     padding: 30,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    backgroundColor: 'rgba(245, 239, 239, 0.87)',
     alignItems: 'center',
     width: '90%',
     maxWidth: 600,
@@ -78,13 +81,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: 'white',
+    color: 'rgba(26, 10, 51, 0.95)',
     marginBottom: 10,
   },
   input: {
     width: '100%',
     height: 45,
-    backgroundColor: '#222',
+    backgroundColor: 'rgba(121, 101, 151, 0.87)',
     color: 'white',
     borderRadius: 10,
     paddingHorizontal: 12,
