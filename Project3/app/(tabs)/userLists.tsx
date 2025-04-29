@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const API_URL = 'http://localhost:8080/api';
 
@@ -108,6 +109,9 @@ export default function UserLists() {
     }, []);
 
     return (
+        <LinearGradient colors={['#3a1c71', '#d76d77', '#ffaf7b']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }} style={styles.container}>
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 {loading ? (
@@ -176,14 +180,15 @@ export default function UserLists() {
                 </View>
             </Modal>
         </View>
+        </LinearGradient>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#121212' },
+    container: { flex: 1, },
     scrollContainer: { padding: 20 },
     listCard: {
-        backgroundColor: '#1e1e1e',
+        backgroundColor: 'rgba(245, 239, 239, 0.87)',
         padding: 15,
         borderRadius: 12,
         marginBottom: 20,
