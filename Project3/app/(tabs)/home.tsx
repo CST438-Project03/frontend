@@ -54,7 +54,9 @@ export default function HomeScreen() {
   };
 
   return (
-    <LinearGradient colors={['#000000', '#808080']} style={styles.container}>
+    <LinearGradient colors={['#3a1c71', '#d76d77', '#ffaf7b']}
+    start={{ x: 0, y: 0 }}
+    end={{ x: 1, y: 1 }} style={styles.container}>
       <View style={styles.overlay}>
         <Text style={styles.title}>Welcome to the home page!</Text>
         {games.length > 0 ? (

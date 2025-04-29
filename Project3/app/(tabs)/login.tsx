@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Image } from 'react-native';
 
 // Get device width for responsive sizing
 const windowWidth = Dimensions.get('window').width;
@@ -160,7 +161,9 @@ const Login: React.FC = () => {
   };
   return (
     <SafeAreaView style={styles.safeArea}>
-      <LinearGradient colors={['#121212', '#2a2a2a']} style={styles.container}>
+      <LinearGradient colors={['#3a1c71', '#d76d77', '#ffaf7b']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }} style={styles.container}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardAvoidView}
@@ -211,6 +214,38 @@ const Login: React.FC = () => {
                   <Text style={styles.loginButtonText}>Login</Text>
                 )}
               </TouchableOpacity>
+
+              {/* Reset password Button */}
+            {/* <View style={styles.forgotPasswordContainer}>
+              <TouchableOpacity onPress={() => router.push('/resetPassword')}>
+                <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
+              </TouchableOpacity>
+            </View> */}
+
+              {/* OAuth Login Section */}
+<View style={styles.divider}>
+  <View style={styles.dividerLine} />
+  <Text style={styles.dividerText}>OR</Text>
+  <View style={styles.dividerLine} />
+</View>
+
+{/* Google Login Button */}
+<TouchableOpacity
+  style={styles.googleButton}
+  onPress={() => {
+    // For web, redirect to the OAuth endpoint
+    if (Platform.OS === 'web') {
+      window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+    } else {
+      // For mobile, you'll need to handle this differently
+      // Consider using a WebView or a library for OAuth
+      setError('Google login is only available on web currently');
+    }
+  }}
+  activeOpacity={0.8}
+>
+  <Text style={styles.googleButtonText}>Continue with Google</Text>
+</TouchableOpacity>
 
               {/* Create account section */}
               <View style={styles.createAccountContainer}>
@@ -337,6 +372,45 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  // Add to your styles object
+divider: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  width: '100%',
+  marginVertical: 20,
+},
+dividerLine: {
+  flex: 1,
+  height: 1,
+  backgroundColor: '#555',
+},
+dividerText: {
+  color: 'white',
+  paddingHorizontal: 10,
+  fontSize: 14,
+},
+googleButton: {
+  backgroundColor: '#4285F4',
+  paddingVertical: 14,
+  paddingHorizontal: 30,
+  borderRadius: 10,
+  width: '100%',
+  alignItems: 'center',
+  marginBottom: 10,
+  shadowColor: '#000',
+  shadowOffset: {
+    width: 0,
+    height: 3,
+  },
+  shadowOpacity: 0.2,
+  shadowRadius: 4,
+  elevation: 5,
+},
+googleButtonText: {
+  color: 'white',
+  fontSize: 18,
+  fontWeight: 'bold',
+},
 });
 
 export default Login;
