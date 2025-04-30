@@ -41,7 +41,7 @@ export default function TabLayout() {
         }}
         />
       <Tabs.Screen
-        name="userLists"
+        name="userListsAndReviews"
         options={{
           title: 'My Lists', 
           tabBarIcon: ({ color, size }) => (

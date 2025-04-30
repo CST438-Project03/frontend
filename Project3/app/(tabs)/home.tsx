@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, FlatList } from 'react-native';
-import { Pagination } from '@mantine/core';
+//import { Pagination } from '@mantine/core';
 import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
@@ -69,33 +69,25 @@ export default function HomeScreen() {
           <Text style={styles.noGamesText}>No games available</Text>
         )}
         <View style={styles.paginationContainer}>
-          <Pagination
-            total={totalPages} // Dynamically set total pages
-            page={currentPage}
-            onChange={(page) => setCurrentPage(page)} // Update current page
-            siblings={0} // Disable default sibling pages
-            boundaries={0} // Disable default boundary pages
-            hideControls // Hide "First" and "Last" controls
-            getItemProps={(page) => ({
-              hidden: !getPaginationRange().includes(page), // Only show pages in the range
-            })}
-            color="blue"
-            size="md"
-            styles={{
-              item: (theme, { active }) => ({
-                backgroundColor: active ? theme.colors.blue[6] : theme.colors.gray[2],
-                color: active ? theme.white : theme.black,
-                fontWeight: active ? 'bold' : 'normal',
-                borderRadius: '4px',
-                width: 40,
-                height: 40,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                cursor: 'pointer',
-              }),
-            }}
-          />
+          <View style={styles.paginationButtons}>
+            {getPaginationRange().map((page) => (
+              <TouchableOpacity
+                key={page}
+                onPress={() => setCurrentPage(page)}
+                style={[
+                  styles.pageButton,
+                  page === currentPage && styles.activePageButton,
+                ]}
+              >
+                <Text
+                  style={page === currentPage ? styles.activePageText : styles.pageText}
+                >
+                  {page}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
         </View>
       </View>
     </LinearGradient>
@@ -156,4 +148,28 @@ const styles = StyleSheet.create({
     marginTop: 20,
     alignItems: 'center',
   },
+  paginationButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+    gap: 10, // if using RN < 0.71, use marginRight on children instead
+  },
+  pageButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: '#ccc',
+    borderRadius: 6,
+  },
+  activePageButton: {
+    backgroundColor: '#3b82f6', // blue
+  },
+  pageText: {
+    color: 'black',
+    fontWeight: 'normal',
+  },
+  activePageText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  
 });
