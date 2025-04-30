@@ -54,9 +54,14 @@ export default function HomeScreen() {
   };
 
   return (
-    <LinearGradient colors={['#000000', '#808080']} style={styles.container}>
-      <View style={styles.overlay}>
-        <Text style={styles.title}>Welcome to the home page!</Text>
+    <LinearGradient
+      colors={['#3a1c71', '#d76d77', '#ffaf7b']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.background}
+    >
+      <View style={styles.container}>
+        <Text style={styles.title}>Welcome to GameStack!</Text>
         {games.length > 0 ? (
           <FlatList
             data={games}
@@ -95,6 +100,9 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -111,11 +119,12 @@ const styles = StyleSheet.create({
     marginTop: 50, // Move the overlay lower on the screen
   },
   title: {
-    fontSize: 28,
+    fontSize: 40,
     fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 20,
+    color: '#fff',
     textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 5,
   },
   gamesContainer: {
     justifyContent: 'center',
@@ -157,14 +166,14 @@ const styles = StyleSheet.create({
   pageButton: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: '#ccc',
+    backgroundColor: '#fff',
     borderRadius: 6,
   },
   activePageButton: {
-    backgroundColor: '#3b82f6', // blue
+    backgroundColor: '#3a1c71', // purple
   },
   pageText: {
-    color: 'black',
+    color: '#3a1c71',
     fontWeight: 'normal',
   },
   activePageText: {
