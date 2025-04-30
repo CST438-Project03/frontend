@@ -16,11 +16,8 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
-<<<<<<< HEAD
-=======
-    "@mantine/core": "^7.17.4",
+    "@mantine/core": "^7.17.5",
     "@mantine/hooks": "^7.17.4",
->>>>>>> b7dd671fdc186d4c3764b8da781e0b3ac28c461d
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
