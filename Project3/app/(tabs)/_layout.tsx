@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Slot, usePathname, useRouter } from 'expo-router';
+import { Tabs } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { 
   View, 
   Text, 
