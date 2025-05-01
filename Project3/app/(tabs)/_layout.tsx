@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Slot, usePathname, useRouter } from 'expo-router';
+import { Tabs } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { 
   View, 
   Text, 
@@ -174,144 +176,51 @@ export default function Layout() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar 
-        translucent 
-        backgroundColor="transparent" 
-        barStyle="dark-content" 
+    <Tabs>
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Welcome',
+          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="waving-hand" color={color} />,
+        }}
       />
-      {showNav && (
-        <View style={styles.navContainer}>
-          {/* Logo on the left */}
-          <View style={styles.logoContainer}>
-            <View style={styles.logo}>
-              <Text style={styles.logoText}>GameStack</Text>
-            </View>
-          </View>
-
-          {/* Navigation Routes in the Middle */}
-          <View style={styles.routesContainer}>
-            {navItems.map(({ name, route }) => (
-              <Pressable
-                key={route}
-                onPress={() => router.push(route)}
-                style={styles.navItem}
-              >
-                <Text
-                  style={[
-                    styles.navText,
-                    pathname === route && styles.activeText,
-                  ]}
-                >
-                  {name}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          {/* Logout Button on the Right */}
-          <View style={styles.logoutContainer}>
-            {isLoggedIn && (
-              <Pressable 
-                onPress={handleLogout} 
-                style={styles.logoutButton}
-              >
-                <MaterialIcons 
-                  name="logout" 
-                  size={24} 
-                  color={COLORS.navText} 
-                />
-              </Pressable>
-            )}
-            
-            {/* Show Admin Panel if user is admin */}
-            {isAdmin && (
-              <Pressable 
-                onPress={() => router.push('/admin' as any)} 
-                style={styles.adminButton}
-              >
-                <MaterialIcons 
-                  name="admin-panel-settings" 
-                  size={24} 
-                  color={COLORS.navText} 
-                />
-              </Pressable>
-            )}
-          </View>
-        </View>
-      )}
-      
-      <View style={styles.content}>
-        <Slot />
-      </View>
-    </SafeAreaView>
+      <Tabs.Screen
+        name="login"
+        options={{
+          title: 'Login',
+          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="login" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="createAccount"
+        options={{
+          title: 'Sign Up',
+          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="add-circle" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="home" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="search"
+        options={{
+          title: 'Search',
+          tabBarIcon: ({ color }) => <MaterialIcons size={28} name="search" color={color} />,
+        }}
+        />
+      <Tabs.Screen
+        name="userListsAndReviews"
+        options={{
+          title: 'My Lists', 
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="list" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'transparent', 
-  },
-  navContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'transparent', 
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 0, 
-    borderColor: 'transparent',
-    // Added for iOS to ensure proper safe area handling
-    paddingTop: Platform.OS === 'ios' ? 44 : 12,
-  },
-  logoContainer: {
-    flex: 1,
-    alignItems: 'flex-start',
-  },
-  logo: {
-    backgroundColor: COLORS.logoBackground,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  logoText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.navText,
-  },
-  routesContainer: {
-    flex: 2,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  navItem: {
-    paddingHorizontal: 12,
-  },
-  navText: {
-    fontSize: 16,
-    color: COLORS.navText,
-  },
-  activeText: {
-    fontWeight: 'bold',
-    color: COLORS.activeText,
-  },
-  logoutContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-  },
-  logoutButton: {
-    padding: 8,
-    marginRight: 8,
-  },
-  adminButton: {
-    padding: 8,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-});
