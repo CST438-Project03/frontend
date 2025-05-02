@@ -10,10 +10,16 @@ import {
   Keyboard,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-
+import { TouchableOpacity } from 'react-native';
+import { router } from 'expo-router';
+type Game = {
+  rawgId: string;
+  title: string;
+  imageUrl: string;
+};
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
-  const [games, setGames] = useState([]);
+  const [games, setGames] = useState<Game[]>([]);
 
   const BASE_URL = 'http://localhost:8080/api/games/search';
 
@@ -22,22 +28,30 @@ export default function SearchScreen() {
     try {
       const response = await fetch(`${BASE_URL}?query=${encodeURIComponent(searchText)}`);
       const data = await response.json();
-      setGames(data);
+      setGames((prevGames) => [...prevGames, ...data]);
     } catch (error) {
       console.error('Search error:', error);
     }
   };
 
+  const handleGamePress = (game: any) => {
+    console.log('Game clicked:', game.title);
+    // Optionally navigate:
+    router.push(`/game/${game.rawgId}`);
+  };
   const handleSearch = () => {
     fetchGames(query);
     Keyboard.dismiss();
   };
 
   const renderGameItem = ({ item }: any) => (
-    <View style={styles.gameCard}>
+    <TouchableOpacity
+      style={styles.gameCard}
+      onPress={() => handleGamePress(item)}
+    >
       <Image source={{ uri: item.imageUrl }} style={styles.gameImage} />
       <Text style={styles.gameTitle}>{item.title}</Text>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -115,4 +129,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
