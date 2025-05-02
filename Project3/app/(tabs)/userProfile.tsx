@@ -378,43 +378,74 @@ const UserProfile = () => {
     }
   };
   
-  const handleDeleteAccount = async () => {
-    setError('');
-    try {
-      if (deleteConfirmation !== 'DELETE') {
-        setError('Please type DELETE to confirm account deletion');
-        return;
-      }
-      
-      setIsLoading(true);
-      
-      // Get JWT token
-      const token = await getAuthToken();
-      
-      if (!token) {
-        setError('Authentication error. Please log in again.');
-        return;
-      }
-      
-      await axios.delete(`${API_URL}/user/account`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      await handleLogout();
-      
-      setDeleteAccountModalVisible(false);
-      setDeleteConfirmation('');
-      
-      Alert.alert('Account Deleted', 'Your account has been successfully deleted');
-    } catch (error) {
-      console.error('Error deleting account:', error);
-      setError('Failed to delete account. Please try again.');
-    } finally {
-      setIsLoading(false);
+ // Replace your current handleDeleteAccount function with this implementation
+const handleDeleteAccount = async () => {
+  setError('');
+  try {
+    if (deleteConfirmation !== 'DELETE') {
+      setError('Please type DELETE to confirm account deletion');
+      return;
     }
-  };
+    
+    setIsLoading(true);
+    
+    // Get JWT token
+    const token = await getAuthToken();
+    
+    if (!token) {
+      setError('Authentication error. Please log in again.');
+      return;
+    }
+    
+    // Get the current user's ID
+    const userId = userData.id;
+    if (!userId) {
+      setError('User ID not found. Please try logging in again.');
+      return;
+    }
+    
+    console.log(`Attempting to delete user account with ID: ${userId}`);
+    
+    // Use the admin deletion endpoint that we know is working
+    await axios.delete(
+      `${API_URL.replace('/api', '')}/api/admin/users/${userId}`, 
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    console.log('Account deletion successful');
+    
+    // Handle successful deletion
+    await handleLogout();
+    
+    setDeleteAccountModalVisible(false);
+    setDeleteConfirmation('');
+    
+    Alert.alert('Account Deleted', 'Your account has been successfully deleted');
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    
+    // Type guard for axios error
+    if (axios.isAxiosError(error) && error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+      
+      // Check for permission errors
+      if (error.response.status === 403) {
+        setError('You do not have permission to delete this account. Please contact an administrator.');
+        return;
+      }
+    }
+    
+    setError('Failed to delete account. Please try again or contact support.');
+  } finally {
+    setIsLoading(false);
+  }
+};
   
   const navigateBack = () => {
     router.back();

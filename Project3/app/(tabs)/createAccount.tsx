@@ -1,11 +1,35 @@
-
-
 import React, { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { View, Text, StyleSheet, TextInput, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TextInput, 
+  ActivityIndicator, 
+  TouchableOpacity, 
+  Platform,
+  Dimensions,
+  ScrollView,
+  KeyboardAvoidingView,
+  SafeAreaView
+} from 'react-native';
 import { useRouter } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
 
+// Get device width for responsive sizing
+const windowWidth = Dimensions.get('window').width;
+const isWeb = Platform.OS === 'web';
+const isSmallScreen = windowWidth < 375;
 
+// API URLs adjusted by platform
+const API_URL = isWeb 
+  ? 'http://localhost:8080' 
+  : 'http://10.0.2.2:8080'; 
+
+const OAUTH2_URL = isWeb 
+  ? 'http://localhost:8080/oauth2/authorization/google' 
+  : 'http://10.0.2.2:8080/oauth2/authorization/google';
+  
 interface UserCredentials {
   username: string;
   email: string;
@@ -75,7 +99,6 @@ const CreateAccount: React.FC = () => {
     }
   };
 
-  // Handle account creation form submission
   const handleCreateAccount = async (): Promise<void> => {
     // Check if all fields are filled
     if (!username || !email || !password || !confirmPassword) {
@@ -102,204 +125,349 @@ const CreateAccount: React.FC = () => {
     try {
       console.log("Starting account creation process...");
       
-      const params = new URLSearchParams();
-      params.append('username', username);
-      params.append('email', email);
-      params.append('password', password);
+      // Create user data object in JSON format
+      const userData = {
+        username,
+        email,
+        password
+      };
       
-      const createResponse = await fetch('http://localhost:8080/auth/signup', {
+      // Use the correct endpoint that matches your security configuration
+      const endpoint = '/auth/register'; // This should match the allowed path in your security config
+      console.log("Sending request to:", `${API_URL}${endpoint}`);
+      
+      // Important: Don't use credentials: 'include' to avoid CORS preflight issues
+      const createResponse = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: params.toString(),
+        body: JSON.stringify(userData),
+        // Remove credentials: 'include' to avoid CORS preflight issues with OAuth
       });
-  
+      
       console.log("Response status:", createResponse.status);
-      const responseText = await createResponse.text();
-      console.log("Response body:", responseText);
       
-      if (!createResponse.ok) {
-        setError(responseText || 'Failed to create account');
-        setIsLoading(false);
-        return;
+      // Process the response
+      let responseData;
+      try {
+        responseData = await createResponse.json();
+      } catch (e) {
+        const responseText = await createResponse.text();
+        responseData = { message: responseText };
       }
-  
-      console.log("Account created successfully");
       
-      // Reset loading state immediately to unfreeze the UI
-      setIsLoading(false);
+      console.log("Response data:", responseData);
       
-      // Clear input fields
-      setUsername('');
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      
-      // Instead of using Alert, navigate directly
-      console.log("Navigating to login page directly");
-      
-      // Add a small delay before navigation to ensure state updates are processed
-      setTimeout(() => {
-        try {
-          console.log("Executing navigation to login");
-          router.replace('/login');
-        } catch (navError) {
-          console.error("Navigation error:", navError);
-          // Fallback navigation attempt
-          try {
-            console.log("Trying fallback navigation");
-            router.push('/login');
-          } catch (fallbackError) {
-            console.error("Fallback navigation failed:", fallbackError);
-          }
-        }
-      }, 300);
-      
+      // Check if successful
+      if (createResponse.ok) {
+        console.log("Account created successfully");
+        setIsLoading(false);
+        clearForm();
+        // Navigate to login page
+        navigateToLogin();
+      } else {
+        // Show error message
+        setError(responseData.message || 'Failed to create account');
+        setIsLoading(false);
+      }
     } catch (err) {
       console.error('Error during account creation:', err);
-      setError('An error occurred. Please try again later.');
+      setError('Network error. Please check your connection and try again.');
       setIsLoading(false);
     }
   };
-
+  
+  // Helper function to clear form
+  const clearForm = () => {
+    setUsername('');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setPasswordFeedback('');
+  };
+  
+  // Helper function for navigation
   const navigateToLogin = () => {
-    router.push('/login');
+    console.log("Navigating to login page");
+    setTimeout(() => {
+      try {
+        router.push('/login');
+      } catch (navError) {
+        console.error("Navigation error:", navError);
+        router.replace('/login');
+      }
+    }, 300);
+  };
+
+  // Helper function to handle Google signup
+  const handleGoogleSignup = () => {
+    // For web, redirect to the OAuth endpoint
+    if (Platform.OS === 'web') {
+      console.log('Redirecting to Google OAuth2 signup');
+      window.location.href = OAUTH2_URL;
+    } else {
+      // For mobile, you'll need to handle this differently
+      // Consider using a WebView or a library for OAuth
+      setError('Google signup is only available on web currently');
+    }
   };
 
   return (
-    <LinearGradient colors={['#000000', '#808080']} style={styles.container}>
-      <View style={styles.overlay}>
-        <Text style={styles.title}>Create an Account</Text>
-
-        {/* Username field with label */}
-        <Text style={styles.inputLabel}>Please enter username</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Username"
-          placeholderTextColor="#999"
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        
-        {/* Email field with label */}
-        <Text style={styles.inputLabel}>Please enter email</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#999"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        
-        {/* Password field with label */}
-        <Text style={styles.inputLabel}>Please enter password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#999"
-          value={password}
-          onChangeText={handlePasswordChange}
-          secureTextEntry
-        />
-        
-        {/* Password requirements feedback */}
-        {passwordFeedback && (
-          <Text style={[
-            styles.passwordFeedback, 
-            passwordFeedback.includes('✓') ? styles.validFeedback : styles.invalidFeedback
-          ]}>
-            {passwordFeedback}
-          </Text>
-        )}
-        
-        {/* Password requirements info */}
-        <Text style={styles.passwordRequirements}>
-          Password must contain at least 6 characters, include both letters and numbers, 
-          and have at least one special character.
-        </Text>
-        
-        {/* Confirm Password field with label */}
-        <Text style={styles.inputLabel}>Please re-enter your password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Confirm Password"
-          placeholderTextColor="#999"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-        />
-
-        {error && <Text style={styles.error}>{error}</Text>}
-
-        {/* Enhanced Create Account Button */}
-        <TouchableOpacity
-          style={[styles.createButton, isLoading && styles.createButtonDisabled]}
-          onPress={handleCreateAccount}
-          disabled={isLoading}
-          activeOpacity={0.8}
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient 
+        colors={['#3a1c71', '#d76d77', '#ffaf7b']} 
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.container}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidView}
         >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.createButtonText}>Create Account</Text>
-          )}
-        </TouchableOpacity>
-        
-        {/* Login section */}
-        <View style={styles.loginContainer}>
-          <Text style={styles.loginText}>Already have an account?</Text>
-          <TouchableOpacity onPress={navigateToLogin}>
-            <Text style={styles.loginLink}>Login here</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </LinearGradient>
+          <ScrollView 
+            contentContainerStyle={styles.scrollContainer}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.contentContainer}>
+              {/* Logo and title section */}
+              <View style={styles.logoContainer}>
+                <MaterialIcons name="sports-esports" size={64} color="#fff" />
+              </View>
+              
+              <Text style={styles.title}>Create an Account</Text>
+
+              {/* Username field with icon */}
+              <View style={styles.inputWrapper}>
+                <MaterialIcons name="person" size={20} color="#3a1c71" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Username"
+                  placeholderTextColor="#999"
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+              
+              {/* Email field with icon */}
+              <View style={styles.inputWrapper}>
+                <MaterialIcons name="email" size={20} color="#3a1c71" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="#999"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+              
+              {/* Password field with icon */}
+              <View style={styles.inputWrapper}>
+                <MaterialIcons name="lock" size={20} color="#3a1c71" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor="#999"
+                  value={password}
+                  onChangeText={handlePasswordChange}
+                  secureTextEntry
+                />
+              </View>
+              
+              {/* Password requirements feedback */}
+              {passwordFeedback && (
+                <Text style={[
+                  styles.passwordFeedback, 
+                  passwordFeedback.includes('✓') ? styles.validFeedback : styles.invalidFeedback
+                ]}>
+                  {passwordFeedback}
+                </Text>
+              )}
+              
+              {/* Password requirements info */}
+              <Text style={styles.passwordRequirements}>
+                Password must contain at least 6 characters, include both letters and numbers, 
+                and have at least one special character.
+              </Text>
+              
+              {/* Confirm Password field with icon */}
+              <View style={styles.inputWrapper}>
+                <MaterialIcons name="lock" size={20} color="#3a1c71" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Confirm Password"
+                  placeholderTextColor="#999"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry
+                />
+              </View>
+
+              {error && <Text style={styles.error}>{error}</Text>}
+
+              {/* Create Account Button */}
+              <TouchableOpacity
+                style={[styles.createButton, isLoading && styles.createButtonDisabled]}
+                onPress={handleCreateAccount}
+                disabled={isLoading}
+                activeOpacity={0.8}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <MaterialIcons name="person-add" size={20} color="white" style={styles.buttonIcon} />
+                    <Text style={styles.createButtonText}>Create Account</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              
+              {/* OAuth Signup Section */}
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>OR</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              {/* Google Signup Button */}
+              <TouchableOpacity
+                style={styles.googleButton}
+                onPress={handleGoogleSignup}
+                activeOpacity={0.8}
+              >
+                <View style={styles.googleIconContainer}>
+                  <Text style={styles.googleIcon}>G</Text>
+                </View>
+                <Text style={styles.googleButtonText}>Sign up with Google</Text>
+              </TouchableOpacity>
+              
+              {/* Login section */}
+              <View style={styles.loginContainer}>
+                <Text style={styles.loginText}>Already have an account?</Text>
+                <TouchableOpacity onPress={navigateToLogin}>
+                  <Text style={styles.loginLink}>Login here</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </LinearGradient>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  overlay: {
-    padding: 40,
-    borderRadius: 15,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  keyboardAvoidView: {
+    flex: 1,
+    width: '100%',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    width: '60%',
-    maxWidth: 600,
+    width: '100%',
+    paddingVertical: 30,
+  },
+  contentContainer: {
+    width: isWeb ? '80%' : '90%',
+    maxWidth: 500,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 24,
+    padding: isSmallScreen ? 20 : 30,
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.3,
+        shadowRadius: 20,
+      },
+      android: {
+        elevation: 15,
+      },
+      web: {
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.25)'
+      }
+    }),
+  },
+  logoContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#3a1c71',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 8,
+      },
+      web: {
+        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+      }
+    }),
   },
   title: {
-    fontSize: 36,
+    fontSize: isSmallScreen ? 28 : 36,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#3a1c71',
     marginBottom: 30,
     textAlign: 'center',
   },
-  inputLabel: {
-    alignSelf: 'flex-start',
-    color: 'white',
-    marginBottom: 8,
-    fontWeight: '500',
-    fontSize: 18,
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#eee',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)'
+      }
+    }),
+  },
+  inputIcon: {
+    marginLeft: 15,
+    marginRight: 5,
   },
   input: {
-    width: '100%',
-    padding: 15,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 10,
-    backgroundColor: 'white',
+    flex: 1,
+    paddingVertical: 15,
+    paddingHorizontal: 10,
     fontSize: 16,
+    color: '#333',
   },
   error: {
     color: '#ff6b6b',
@@ -326,37 +494,122 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   createButton: {
-    backgroundColor: '#BB86FC',
+    backgroundColor: '#3a1c71',
     paddingVertical: 15,
     paddingHorizontal: 30,
-    borderRadius: 10,
+    borderRadius: 12,
     width: '100%',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 10,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#3a1c71',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: '0 4px 12px rgba(58, 28, 113, 0.3)',
+        cursor: 'pointer',
+      }
+    }),
   },
   createButtonDisabled: {
-    backgroundColor: 'rgba(187, 134, 252, 0.6)',
+    backgroundColor: 'rgba(58, 28, 113, 0.6)',
+  },
+  buttonIcon: {
+    marginRight: 10,
   },
   createButtonText: {
-    color: '#121212',
+    color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  loginContainer: {
-    marginTop: 20,
+  divider: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
+    marginVertical: 25,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ddd',
+  },
+  dividerText: {
+    paddingHorizontal: 15,
+    color: '#666',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  googleButton: {
+    backgroundColor: 'white',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        cursor: 'pointer',
+      }
+    }),
+  },
+  googleIconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+    overflow: 'hidden',
+  },
+  googleIcon: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4285F4', // Google blue color
+  },
+  googleButtonText: {
+    color: '#333',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loginContainer: {
+    marginTop: 25,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   loginText: {
-    color: 'white',
+    color: '#666',
     marginRight: 5,
     fontSize: 16,
   },
   loginLink: {
-    color: '#4da6ff',
+    color: '#3a1c71',
     fontWeight: 'bold',
     fontSize: 16,
   },
 });
-
 export default CreateAccount;
