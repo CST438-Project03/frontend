@@ -916,7 +916,7 @@ const styles = StyleSheet.create({
     padding: 25,
     width: isWeb ? '80%' : '90%',
     maxWidth: 600,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)', // Changed to white background like login page
+    backgroundColor: 'rgba(255, 255, 255, 0.95)', 
     borderRadius: 24,
     shadowColor: '#000',
     shadowOffset: {
@@ -940,7 +940,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#3a1c71', // Using primary purple from login
+    backgroundColor: '#3a1c71', 
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
@@ -983,7 +983,7 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#3a1c71', // Changed to match login primary color
+    color: '#3a1c71', 
     textAlign: 'center',
     marginBottom: 25,
   },
@@ -995,17 +995,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.1)', // Lighter border color for white background
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)', 
   },
   infoLabel: {
     width: 90,
     fontWeight: 'bold',
-    color: '#333', // Darker text for white background
+    color: '#333', 
     fontSize: 16,
   },
   infoValue: {
     flex: 1,
-    color: '#333', // Darker text for white background
+    color: '#333',
     fontSize: 16,
   },
   editButton: {
