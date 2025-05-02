@@ -879,7 +879,7 @@ const styles = StyleSheet.create({
     left: 20,
   },
   backButtonText: {
-    color: '#BB86FC',
+    color: '#fff',
     fontSize: 18,
     fontWeight: '500',
   },
@@ -916,8 +916,8 @@ const styles = StyleSheet.create({
     padding: 25,
     width: isWeb ? '80%' : '90%',
     maxWidth: 600,
-    backgroundColor: 'rgba(40, 40, 40, 0.8)',
-    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)', // Changed to white background like login page
+    borderRadius: 24,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -926,6 +926,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 10,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.25)'
+      }
+    }),
   },
   profileImageSection: {
     alignItems: 'center',
@@ -935,13 +940,27 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#3a3a3a',
+    backgroundColor: '#3a1c71', // Using primary purple from login
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
     overflow: 'hidden',
     borderWidth: 3,
-    borderColor: '#BB86FC',
+    borderColor: '#3a1c71',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 8,
+      },
+      web: {
+        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+      }
+    }),
   },
   profileImage: {
     width: 120,
@@ -949,22 +968,22 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   imageEditButton: {
-    backgroundColor: 'rgba(187, 134, 252, 0.1)',
+    backgroundColor: 'rgba(58, 28, 113, 0.1)',
     paddingVertical: 8,
     paddingHorizontal: 15,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#BB86FC',
+    borderColor: '#3a1c71',
   },
   imageEditButtonText: {
-    color: '#BB86FC',
+    color: '#3a1c71',
     fontWeight: '500',
     fontSize: 14,
   },
   welcomeText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#BB86FC',
+    color: '#3a1c71', // Changed to match login primary color
     textAlign: 'center',
     marginBottom: 25,
   },
@@ -976,42 +995,56 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)', // Lighter border color for white background
   },
   infoLabel: {
     width: 90,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#333', // Darker text for white background
     fontSize: 16,
   },
   infoValue: {
     flex: 1,
-    color: 'white',
+    color: '#333', // Darker text for white background
     fontSize: 16,
   },
   editButton: {
-    backgroundColor: '#BB86FC',
+    backgroundColor: '#3a1c71',
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 15,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#3a1c71',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: '0 4px 12px rgba(58, 28, 113, 0.3)',
+      }
+    }),
   },
   editButtonText: {
-    color: '#121212',
+    color: 'white',
     fontWeight: 'bold',
   },
   passwordRow: {
     marginTop: 20,
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)', 
   },
   passwordText: {
-    color: 'white',
+    color: '#333', 
     fontSize: 16,
     marginBottom: 10,
   },
   passwordButton: {
-    backgroundColor: 'rgba(3, 218, 198, 0.9)',
+    backgroundColor: '#3a1c71', 
     paddingVertical: 12,
     borderRadius: 15,
     alignItems: 'center',
@@ -1023,9 +1056,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
     elevation: 5,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#3a1c71',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: '0 4px 12px rgba(58, 28, 113, 0.3)',
+      }
+    }),
   },
   passwordButtonText: {
-    color: '#121212',
+    color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -1045,7 +1092,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   dangerZoneDescription: {
-    color: '#f0f0f0',
+    color: '#333', 
     fontSize: 14,
     marginBottom: 15,
     opacity: 0.8,
@@ -1076,7 +1123,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   modalContent: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: 'white', 
     borderRadius: 15,
     padding: 25,
     width: isWeb ? '40%' : '80%',
@@ -1093,7 +1140,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#3a1c71', 
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -1105,14 +1152,14 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   modalText: {
-    color: 'white',
+    color: '#333', 
     textAlign: 'center',
     marginBottom: 20,
     fontSize: 16,
   },
   inputLabel: {
     alignSelf: 'flex-start',
-    color: 'white',
+    color: '#333',
     marginBottom: 6,
     fontWeight: '500',
     fontSize: 16,
@@ -1122,10 +1169,10 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#555',
+    borderColor: '#ddd', 
     borderRadius: 10,
-    backgroundColor: '#3a3a3a',
-    color: 'white',
+    backgroundColor: 'white',
+    color: '#333',
     fontSize: 16,
   },
   errorText: {
@@ -1155,12 +1202,26 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   cancelButton: {
-    backgroundColor: '#555',
+    backgroundColor: '#ddd', 
     marginRight: 10,
   },
   saveButton: {
-    backgroundColor: '#BB86FC',
+    backgroundColor: '#3a1c71',
     marginLeft: 10,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#3a1c71',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: '0 4px 12px rgba(58, 28, 113, 0.3)',
+      }
+    }),
   },
   deleteConfirmButton: {
     backgroundColor: '#CF6679',
@@ -1170,12 +1231,12 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   cancelButtonText: {
-    color: 'white',
+    color: '#333',
     fontWeight: 'bold',
     fontSize: 16,
   },
   saveButtonText: {
-    color: '#121212',
+    color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -1184,26 +1245,27 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  // Add these to your styles
-oauthBadge: {
-  backgroundColor: '#3a3a3a',
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  borderRadius: 20,
-  alignSelf: 'flex-start',
-  marginBottom: 15,
-},
-oauthBadgeText: {
-  color: '#BB86FC',
-  fontWeight: '600',
-},
-infoText: {
-  color: '#b0b0b0',
-  fontSize: 14,
-  marginTop: 10,
-  marginBottom: 15,
-  textAlign: 'center',
-},
+  oauthBadge: {
+    backgroundColor: 'rgba(58, 28, 113, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#3a1c71',
+  },
+  oauthBadgeText: {
+    color: '#3a1c71', 
+    fontWeight: '600',
+  },
+  infoText: {
+    color: '#666', 
+    fontSize: 14,
+    marginTop: 10,
+    marginBottom: 15,
+    textAlign: 'center',
+  },
 });
 
 export default UserProfile;
