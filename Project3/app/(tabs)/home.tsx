@@ -15,7 +15,7 @@ export default function HomeScreen() {
     const fetchGames = async () => {
       try {
         console.log(`Fetching games for page ${currentPage} with pageSize ${gamesPerPage}`);
-        const response = await fetch(`http://localhost:8080/api/games/fetchFromRawg?page=${currentPage}&pageSize=${gamesPerPage}`);
+        const response = await fetch(`https://cst438-project3-2224023aed89.herokuapp.com/api/games/fetchFromRawg?page=${currentPage}&pageSize=${gamesPerPage}`);
         if (!response.ok) {
           throw new Error(`Failed to fetch games: ${response.statusText}`);
         }

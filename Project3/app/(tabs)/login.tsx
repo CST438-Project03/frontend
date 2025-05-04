@@ -23,7 +23,7 @@ const isWeb = Platform.OS === 'web';
 
 // API URLs adjusted by platform
 const API_URL = isWeb 
-  ? 'http://localhost:8080/auth' 
+  ? 'https://cst438-project3-2224023aed89.herokuapp.com/auth' 
   : 'http://10.0.2.2:8080/auth';
 
 interface LoginResponse {
@@ -235,7 +235,7 @@ const Login: React.FC = () => {
   onPress={() => {
     // For web, redirect to the OAuth endpoint
     if (Platform.OS === 'web') {
-      window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+      window.location.href = 'https://cst438-project3-2224023aed89.herokuapp.com/oauth2/authorization/google';
     } else {
       // For mobile, you'll need to handle this differently
       // Consider using a WebView or a library for OAuth

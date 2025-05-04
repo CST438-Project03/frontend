@@ -107,7 +107,7 @@ const CreateAccount: React.FC = () => {
       params.append('email', email);
       params.append('password', password);
       
-      const createResponse = await fetch('http://localhost:8080/auth/signup', {
+      const createResponse = await fetch('https://cst438-project3-2224023aed89.herokuapp.com/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',

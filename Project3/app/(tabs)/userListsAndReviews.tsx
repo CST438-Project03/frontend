@@ -17,7 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = 'https://cst438-project3-2224023aed89.herokuapp.com/api';
 
 
 export default function UserListsAndReviews() {

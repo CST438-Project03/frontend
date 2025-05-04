@@ -83,7 +83,7 @@ export default function GameDetails() {
     try {
       const token = await AsyncStorage.getItem('jwtToken'); // Get the stored JWT
 
-      const res = await fetch(`http://localhost:8080/api/reviews/create/game/${id}`, {
+      const res = await fetch(`https://cst438-project3-2224023aed89.herokuapp.com/api/reviews/create/game/${id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -123,7 +123,7 @@ export default function GameDetails() {
     try {
       const token = await AsyncStorage.getItem('jwtToken');
 
-      const response = await fetch('http://localhost:8080/api/lists/getUserLists', {
+      const response = await fetch('https://cst438-project3-2224023aed89.herokuapp.com/api/lists/getUserLists', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -158,7 +158,7 @@ export default function GameDetails() {
         return;
       }
 
-      const res = await fetch(`http://localhost:8080/api/lists/addGame/${selectedListId}/games/${id}`, {
+      const res = await fetch(`https://cst438-project3-2224023aed89.herokuapp.com/api/lists/addGame/${selectedListId}/games/${id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

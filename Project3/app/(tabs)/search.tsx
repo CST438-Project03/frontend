@@ -21,7 +21,7 @@ export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const [games, setGames] = useState<Game[]>([]);
 
-  const BASE_URL = 'http://localhost:8080/api/games/search';
+  const BASE_URL = 'https://cst438-project3-2224023aed89.herokuapp.com/api/games/search';
 
   const fetchGames = async (searchText: string) => {
     if (!searchText) return;
