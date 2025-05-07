@@ -3,12 +3,35 @@ import { View, Text, StyleSheet, Image, ActivityIndicator, ScrollView } from 're
 import { useLocalSearchParams } from 'expo-router';
 import { router } from 'expo-router';
 import { TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons'; // Add MaterialIcons
 import { Button, Modal, TextInput, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ToastAndroid, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
+// Star Rating Selector Component
+const StarRatingSelector = ({ rating, setRating, maxStars = 5 }) => {
+  return (
+    <View style={styles.starContainer}>
+      {[...Array(maxStars)].map((_, index) => {
+        const starValue = index + 1;
+        return (
+          <TouchableOpacity
+            key={starValue}
+            onPress={() => setRating(starValue.toString())}
+            style={styles.starButton}
+          >
+            <MaterialIcons
+              name={starValue <= parseInt(rating || 0) ? "star" : "star-border"}
+              size={36}
+              color="#FFD700"
+            />
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+};
 
 export default function GameDetails() {
   const { id } = useLocalSearchParams();
@@ -22,8 +45,6 @@ export default function GameDetails() {
   const [lists, setLists] = useState([]);
   const [listModalVisible, setListModalVisible] = useState(false);
   const [selectedListId, setSelectedListId] = useState(null);
-
-
 
   useEffect(() => {
     const fetchGameDetails = async () => {
@@ -47,31 +68,18 @@ export default function GameDetails() {
       }
     };
 
-
     fetchGameDetails();
   }, [id]);
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#ffffff" />
-      </View>
-    );
-  }
-
-  if (!game) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Game not found.</Text>
-      </View>
-    );
-  }
-
+  // Modified to use star rating
   const handleSubmitReview = async () => {
-    const numRating = parseInt(rating);
+    const starRating = parseInt(rating);
+    
+    // Convert 5-star rating to 10-point scale
+    const numRating = starRating * 2;
 
-    if (isNaN(numRating) || numRating < 1 || numRating > 10) {
-      Alert.alert('Invalid Rating', 'Please enter a rating between 1 and 10.');
+    if (isNaN(starRating) || starRating < 1 || starRating > 5) {
+      Alert.alert('Invalid Rating', 'Please select a rating between 1 and 5 stars.');
       return;
     }
 
@@ -81,16 +89,16 @@ export default function GameDetails() {
     }
 
     try {
-      const token = await AsyncStorage.getItem('jwtToken'); // Get the stored JWT
+      const token = await AsyncStorage.getItem('jwtToken'); 
 
       const res = await fetch(`http://localhost:8080/api/reviews/create/game/${id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Bearer ${token}`, // Add the token here
+          Authorization: `Bearer ${token}`, 
         },
         body: new URLSearchParams({
-          rating: numRating.toString(),
+          rating: numRating.toString(), // Send the converted 10-point rating
           comment,
         }).toString(),
       });
@@ -132,7 +140,7 @@ export default function GameDetails() {
       });
 
       const data = await response.json();
-      console.log('User Lists API Response:', data); //  log here
+      console.log('User Lists API Response:', data);
 
       if (response.ok) {
         setLists(data.lists || []);
@@ -180,6 +188,21 @@ export default function GameDetails() {
     }
   };
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#ffffff" />
+      </View>
+    );
+  }
+
+  if (!game) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Game not found.</Text>
+      </View>
+    );
+  }
 
   return (
     <>
@@ -193,106 +216,135 @@ export default function GameDetails() {
           <TouchableOpacity onPress={() => router.push('/(tabs)/home')} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-
+  
           <Image source={{ uri: game.imageUrl }} style={styles.gameImage} />
           <View style={styles.gameInfoCard}>
             <Text style={styles.cardTitle}>{game.title}</Text>
-            <View style={{ height: 1, backgroundColor: '#444', marginVertical: 10 }} />
-            <Text style={styles.genre}>Genre: {game.genre}</Text>
-            <Text style={styles.info}>Release Date: {game.releaseDate}</Text>
-            <Text style={styles.info}>Rating: {game.rating}</Text>
-            <Text style={styles.info}>Platforms: {game.platforms}</Text>
-            <Text style={styles.info}>Developers: {game.developers}</Text>
-            <Text style={styles.description}>{game.description}</Text>
+            <View style={styles.divider} />
+            
+            {/* Improved info section with consistent formatting */}
+            <View style={styles.infoGrid}>
+              <Text style={styles.infoLabel}>Genre:</Text>
+              <Text style={styles.infoValue}>{game.genre}</Text>
+              
+              <Text style={styles.infoLabel}>Release Date:</Text>
+              <Text style={styles.infoValue}>{game.releaseDate}</Text>
+              
+              <Text style={styles.infoLabel}>Rating:</Text>
+              <Text style={styles.infoValue}>{game.rating}</Text>
+              
+              <Text style={styles.infoLabel}>Platforms:</Text>
+              <Text style={styles.infoValue}>{game.platforms}</Text>
+              
+              <Text style={styles.infoLabel}>Developers:</Text>
+              <Text style={styles.infoValue}>{game.developers}</Text>
+            </View>
+            
+            {/* Improved description section */}
+            <View style={styles.descriptionContainer}>
+              <Text style={styles.descriptionTitle}>Description</Text>
+              <Text style={styles.description}>{game.description}</Text>
+            </View>
           </View>
-
-
+  
           <View style={styles.actionButtons}>
-
-            <TouchableOpacity style={styles.modalButton} onPress={async () => {
-              setModalVisible(true)
-            }}>
+            <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(true)}>
               <Text style={styles.modalButtonText}>Write a Review</Text>
             </TouchableOpacity>
-
-
+  
             <TouchableOpacity style={styles.modalButton} onPress={async () => {
               await fetchUserLists();
               setListModalVisible(true);
             }}>
               <Text style={styles.modalButtonText}>Add To List</Text>
             </TouchableOpacity>
-
-
           </View>
-
         </ScrollView>
-
-        <Modal visible={modalVisible} animationType="slide" transparent={true}>
+  
+        {/* Improved Review Modal with Star Rating */}
+        <Modal visible={modalVisible} animationType="fade" transparent={true}>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Submit a Review</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Rating (1–5)"
-                keyboardType="numeric"
-                value={rating}
-                onChangeText={setRating}
-                placeholderTextColor="#fff"
-              />
-              <TextInput
-                style={[styles.input, { height: 80 }]}
-                placeholder="Comment"
-                value={comment}
-                onChangeText={setComment}
-                multiline
-                placeholderTextColor="#fff"
-              />
-              <View style={styles.modalButtons}>
               
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Rating</Text>
+                <StarRatingSelector rating={rating} setRating={setRating} />
+              </View>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Your Review</Text>
+                <TextInput
+                  style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
+                  placeholder="Share your thoughts about this game..."
+                  value={comment}
+                  onChangeText={setComment}
+                  multiline
+                  placeholderTextColor="rgba(58, 28, 113, 0.5)"
+                />
+              </View>
+              
+              <View style={styles.modalButtons}>
                 <TouchableOpacity style={[styles.modalButton]} onPress={handleSubmitReview}>
-                                  <Text style={styles.modalButtonText}>Cancel</Text>
-                                </TouchableOpacity>
-
-               
-                  <TouchableOpacity style={[styles.modalButton, { backgroundColor: '#444' }]} onPress={() => setModalVisible(false)}>
-                                    <Text style={styles.modalButtonText}>Cancel</Text>
-                                  </TouchableOpacity>
+                  <Text style={styles.modalButtonText}>Submit</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.modalButton, { backgroundColor: '#444' }]} 
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
         </Modal>
-
-        <Modal visible={listModalVisible} animationType="slide" transparent={true}>
+  
+        {/* Improved List Modal */}
+        <Modal visible={listModalVisible} animationType="fade" transparent={true}>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Select a List</Text>
-
-              {lists.map((list) => (
-                <TouchableOpacity
-                  key={list.id}
-                  onPress={() => setSelectedListId(list.id)}
-                  style={[
-                    styles.listCard,
-                    selectedListId === list.id && styles.listCardSelected
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.listCardText,
-                      selectedListId === list.id && { color: '#fff' }
-                    ]}
-                  >
-                    {list.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-
+              
+              <View style={styles.listsContainer}>
+                {lists.length > 0 ? (
+                  lists.map((list) => (
+                    <TouchableOpacity
+                      key={list.id}
+                      onPress={() => setSelectedListId(list.id)}
+                      style={[
+                        styles.listCard,
+                        selectedListId === list.id && styles.listCardSelected
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.listCardText,
+                          selectedListId === list.id && { color: '#fff' }
+                        ]}
+                      >
+                        {list.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text style={styles.noListsText}>No lists available. Create a list first.</Text>
+                )}
+              </View>
+  
               <View style={styles.modalButtons}>
-                <TouchableOpacity style={[styles.modalButton,]} onPress={handleAddGameToList}>
+                <TouchableOpacity 
+                  style={[styles.modalButton]} 
+                  onPress={handleAddGameToList}
+                  disabled={!selectedListId}
+                >
                   <Text style={styles.modalButtonText}>Add</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.modalButton, { backgroundColor: '#444' }]} onPress={() => setListModalVisible(false)}>
+                
+                <TouchableOpacity 
+                  style={[styles.modalButton, { backgroundColor: '#444' }]} 
+                  onPress={() => setListModalVisible(false)}
+                >
                   <Text style={styles.modalButtonText}>Cancel</Text>
                 </TouchableOpacity>
               </View>
@@ -301,9 +353,9 @@ export default function GameDetails() {
         </Modal>
       </LinearGradient>
     </>
-
   );
 }
+
 const styles = StyleSheet.create({
   background: {
     flex: 1,
@@ -326,34 +378,77 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 6,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#3a1c71',
-    textAlign: 'center',
-    marginBottom: 10,
+  starContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 10,
   },
-  genre: {
-    fontSize: 18,
-    color: '#3a1c71',
-    textAlign: 'center',
-    marginBottom: 10,
-    fontWeight: 'bold'
+  starButton: {
+    padding: 5,
   },
-  info: {
+  infoGrid: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 15,
+  },
+  infoLabel: {
+    width: '30%',
     fontSize: 16,
     color: '#3a1c71',
-    textAlign: 'center',
-    marginBottom: 5,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  infoValue: {
+    width: '70%',
+    fontSize: 16,
+    color: '#3a1c71',
+    marginBottom: 8,
+  },
+  descriptionContainer: {
+    marginTop: 10,
+  },
+  descriptionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#3a1c71',
+    marginBottom: 8,
   },
   description: {
     fontSize: 16,
-    color: '#3a1c71',
+    color: '#333',
+    lineHeight: 24,
     textAlign: 'left',
-    marginTop: 15,
-    lineHeight: 22,
-    fontWeight: 'bold'
+  },
+  inputGroup: {
+    marginBottom: 16,
+    width: '100%',
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3a1c71',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  input: {
+    backgroundColor: 'rgba(58, 28, 113, 0.1)',
+    color: '#333',
+    padding: 12,
+    marginBottom: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(58, 28, 113, 0.2)',
+  },
+  listsContainer: {
+    maxHeight: 300,
+    marginVertical: 12,
+  },
+  noListsText: {
+    textAlign: 'center',
+    color: '#666',
+    marginVertical: 20,
   },
   errorText: {
     fontSize: 18,
@@ -371,6 +466,7 @@ const styles = StyleSheet.create({
     padding: 24,
     borderRadius: 16,
     width: '85%',
+    maxWidth: 500,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
@@ -380,16 +476,9 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 12,
+    marginBottom: 16,
     color: '#3a1c71',
     textAlign: 'center',
-  },
-  input: {
-    backgroundColor: 'gray',
-    color: '#fff',
-    padding: 12,
-    marginBottom: 12,
-    borderRadius: 8,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -411,14 +500,13 @@ const styles = StyleSheet.create({
     width: 320,
     alignSelf: 'center',
     marginTop: 20,
+    marginBottom: 30,
   },
-  buttonWrapper: {
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  equalButton: {
-    flex: 1,
-    alignSelf: 'stretch',
+  divider: {
+    height: 1, 
+    backgroundColor: 'rgba(58, 28, 113, 0.2)', 
+    marginVertical: 10,
+    width: '100%',
   },
   gameInfoCard: {
     backgroundColor: '#fff',
@@ -464,7 +552,7 @@ const styles = StyleSheet.create({
   modalButton: {
     flex: 1,
     backgroundColor: '#3a1c71',
-    padding: 10,
+    padding: 12,
     borderRadius: 8,
     alignItems: 'center',
     marginHorizontal: 5
