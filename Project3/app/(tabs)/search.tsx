@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   TextInput,
@@ -8,63 +8,85 @@ import {
   Image,
   Dimensions,
   Keyboard,
+  TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
+
 type Game = {
   rawgId: string;
   title: string;
   imageUrl: string;
 };
+
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const [games, setGames] = useState<Game[]>([]);
+  const [users, setUsers] = useState([]);
+  const router = useRouter();
 
-  const BASE_URL = 'http://localhost:8080/api/games/search';
+  const BASE_URL = 'http://localhost:8080/api';
 
-  const fetchGames = async (searchText: string) => {
+  const fetchResults = async (searchText: string) => {
     if (!searchText) return;
     try {
-      const response = await fetch(`${BASE_URL}?query=${encodeURIComponent(searchText)}`);
-      const data = await response.json();
-      setGames((prevGames) => [...prevGames, ...data]);
+      const [gameResponse, userResponse] = await Promise.all([
+        fetch(`${BASE_URL}/games/search?query=${encodeURIComponent(searchText)}`),
+        fetch(`${BASE_URL}/user/search?query=${encodeURIComponent(searchText)}`),
+      ]);
+
+      const gameData = await gameResponse.json();
+      const userData = await userResponse.json();
+
+      setGames(gameData);
+      setUsers(userData);
     } catch (error) {
       console.error('Search error:', error);
     }
   };
 
-  const handleGamePress = (game: any) => {
+  const handleGamePress = (game: Game) => {
     console.log('Game clicked:', game.title);
-    // Optionally navigate:
     router.push(`/game/${game.rawgId}`);
   };
+
   const handleSearch = () => {
-    fetchGames(query);
+    fetchResults(query);
     Keyboard.dismiss();
   };
 
-  const renderGameItem = ({ item }: any) => (
+  const renderGameItem = ({ item }: { item: Game }) => (
     <TouchableOpacity
-      style={styles.gameCard}
+      style={styles.resultCard}
       onPress={() => handleGamePress(item)}
     >
-      <Image source={{ uri: item.imageUrl }} style={styles.gameImage} />
-      <Text style={styles.gameTitle}>{item.title}</Text>
+      <Image source={{ uri: item.imageUrl }} style={styles.resultImage} />
+      <Text style={styles.resultTitle}>{item.title}</Text>
+    </TouchableOpacity>
+  );
+
+  const renderUserItem = ({ item }: any) => (
+    <TouchableOpacity
+      style={styles.resultCard}
+      onPress={() => router.push(`/user/${item.id}`)}
+    >
+      <Text style={styles.resultTitle}>{item.username}</Text>
     </TouchableOpacity>
   );
 
   return (
-    <LinearGradient colors={['#3a1c71', '#d76d77', '#ffaf7b']}
-    start={{ x: 0, y: 0 }}
-    end={{ x: 1, y: 1 }}style={styles.container}>
+    <LinearGradient
+      colors={['#3a1c71', '#d76d77', '#ffaf7b']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
       <View style={styles.overlay}>
-        <Text style={styles.title}>Search Games</Text>
+        <Text style={styles.title}>Search</Text>
         <TextInput
-          
           style={styles.input}
-          placeholder="Enter a game name..."
-          placeholderTextColor='rgba(20, 18, 18, 0.87)'
+          placeholder="Search for games or users..."
+          placeholderTextColor="rgba(20, 18, 18, 0.87)"
           value={query}
           onChangeText={setQuery}
           onSubmitEditing={handleSearch}
@@ -72,9 +94,23 @@ export default function SearchScreen() {
         <FlatList
           data={games}
           renderItem={renderGameItem}
-          keyExtractor={(item, index) => index.toString()}
+          keyExtractor={(item, index) => `game-${index}`}
           numColumns={2}
-          contentContainerStyle={styles.gamesContainer}
+          contentContainerStyle={styles.resultsContainer}
+          ListHeaderComponent={
+            users.length > 0 && (
+              <>
+                <Text style={styles.sectionTitle}>Users</Text>
+                <FlatList
+                  data={users}
+                  renderItem={renderUserItem}
+                  keyExtractor={(item, index) => `user-${index}`}
+                  contentContainerStyle={styles.resultsContainer}
+                />
+                <Text style={styles.sectionTitle}>Games</Text>
+              </>
+            )
+          }
         />
       </View>
     </LinearGradient>
@@ -107,25 +143,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 20,
   },
-  gamesContainer: {
+  resultsContainer: {
     alignItems: 'center',
     paddingBottom: 20,
   },
-  gameCard: {
+  resultCard: {
     flex: 1,
     margin: 10,
     alignItems: 'center',
     maxWidth: Dimensions.get('window').width / 2 - 30,
   },
-  gameImage: {
+  resultImage: {
     width: '100%',
     height: 150,
     borderRadius: 10,
   },
-  gameTitle: {
+  resultTitle: {
     marginTop: 10,
     fontSize: 14,
     color: 'white',
     textAlign: 'center',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'rgba(26, 10, 51, 0.95)',
+    marginVertical: 10,
   },
 });
