@@ -41,6 +41,8 @@ export default function GameDetails() {
   const [modalVisible, setModalVisible] = useState(false);
   const [rating, setRating] = useState('');
   const [comment, setComment] = useState('');
+  const [userReview, setUserReview] = useState(null);
+  const [editMode, setEditMode] = useState(false);
 
   const [lists, setLists] = useState([]);
   const [listModalVisible, setListModalVisible] = useState(false);
@@ -69,13 +71,58 @@ export default function GameDetails() {
     };
 
     fetchGameDetails();
+    fetchUserReview(); // Add this to fetch user's existing review
   }, [id]);
 
-  // Modified to use star rating
+  // Add function to fetch user's existing review
+  const fetchUserReview = async () => {
+    try {
+      const token = await AsyncStorage.getItem('jwtToken');
+      if (!token) return;
+
+      const response = await fetch(`http://localhost:8080/api/reviews/user/game/${id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.review) {
+          // Convert the 10-point rating back to 5-star scale
+          const starRating = Math.round(data.review.rating / 2).toString();
+          setUserReview(data.review);
+          
+          // Pre-fill the form if we're editing
+          if (editMode) {
+            setRating(starRating);
+            setComment(data.review.comment);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user review:', error);
+    }
+  };
+
+  // Function to handle edit review button
+  const handleEditReview = () => {
+    if (userReview) {
+      // Convert the 10-point rating back to 5-star scale
+      const starRating = Math.round(userReview.rating / 2).toString();
+      setRating(starRating);
+      setComment(userReview.comment);
+      setEditMode(true);
+      setModalVisible(true);
+    }
+  };
+
+  // Modified to use star rating and handle both create and update
   const handleSubmitReview = async () => {
     const starRating = parseInt(rating);
     
-    // Convert 5-star rating to 10-point scale
+    // Convert 5-star rating to 10-point scale for API
     const numRating = starRating * 2;
 
     if (isNaN(starRating) || starRating < 1 || starRating > 5) {
@@ -91,8 +138,17 @@ export default function GameDetails() {
     try {
       const token = await AsyncStorage.getItem('jwtToken'); 
 
-      const res = await fetch(`http://localhost:8080/api/reviews/create/game/${id}`, {
-        method: 'POST',
+      let url = `http://localhost:8080/api/reviews/create/game/${id}`;
+      let method = 'POST';
+      
+      // If we're editing, use the update endpoint instead
+      if (editMode && userReview) {
+        url = `http://localhost:8080/api/reviews/update/${userReview.id}`;
+        method = 'PUT';
+      }
+
+      const res = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           Authorization: `Bearer ${token}`, 
@@ -108,10 +164,12 @@ export default function GameDetails() {
       if (!res.ok) {
         Alert.alert('Error', data.message || 'Failed to submit review.');
       } else {
-        showToast('Review submitted successfully!');
+        showToast(editMode ? 'Review updated successfully!' : 'Review submitted successfully!');
         setModalVisible(false);
         setRating('');
         setComment('');
+        setEditMode(false);
+        fetchUserReview(); // Refresh the user's review data
       }
     } catch (error) {
       Alert.alert('Error', 'Something went wrong.');
@@ -245,11 +303,49 @@ export default function GameDetails() {
               <Text style={styles.descriptionTitle}>Description</Text>
               <Text style={styles.description}>{game.description}</Text>
             </View>
+
+            {/* User review section (if exists) */}
+            {userReview && (
+              <View style={styles.userReviewContainer}>
+                <View style={styles.reviewHeader}>
+                  <Text style={styles.reviewTitle}>Your Review</Text>
+                  <TouchableOpacity onPress={handleEditReview} style={styles.editButton}>
+                    <MaterialIcons name="edit" size={20} color="#3a1c71" />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.starContainer}>
+                  {[...Array(5)].map((_, index) => {
+                    const starValue = index + 1;
+                    // Convert 10-point rating to 5-star display
+                    const displayRating = Math.round(userReview.rating / 2);
+                    return (
+                      <MaterialIcons
+                        key={starValue}
+                        name={starValue <= displayRating ? "star" : "star-border"}
+                        size={24}
+                        color="#FFD700"
+                      />
+                    );
+                  })}
+                </View>
+                <Text style={styles.reviewComment}>{userReview.comment}</Text>
+              </View>
+            )}
           </View>
   
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(true)}>
-              <Text style={styles.modalButtonText}>Write a Review</Text>
+            <TouchableOpacity 
+              style={styles.modalButton} 
+              onPress={() => {
+                setEditMode(false);
+                setRating('');
+                setComment('');
+                setModalVisible(true);
+              }}
+            >
+              <Text style={styles.modalButtonText}>
+                {userReview ? 'Write New Review' : 'Write a Review'}
+              </Text>
             </TouchableOpacity>
   
             <TouchableOpacity style={styles.modalButton} onPress={async () => {
@@ -265,7 +361,9 @@ export default function GameDetails() {
         <Modal visible={modalVisible} animationType="fade" transparent={true}>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Submit a Review</Text>
+              <Text style={styles.modalTitle}>
+                {editMode ? 'Edit Your Review' : 'Submit a Review'}
+              </Text>
               
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Rating</Text>
@@ -286,12 +384,15 @@ export default function GameDetails() {
               
               <View style={styles.modalButtons}>
                 <TouchableOpacity style={[styles.modalButton]} onPress={handleSubmitReview}>
-                  <Text style={styles.modalButtonText}>Submit</Text>
+                  <Text style={styles.modalButtonText}>{editMode ? 'Update' : 'Submit'}</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
                   style={[styles.modalButton, { backgroundColor: '#444' }]} 
-                  onPress={() => setModalVisible(false)}
+                  onPress={() => {
+                    setModalVisible(false);
+                    setEditMode(false);
+                  }}
                 >
                   <Text style={styles.modalButtonText}>Cancel</Text>
                 </TouchableOpacity>
@@ -560,5 +661,32 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: '#fff',
     fontWeight: 'bold'
+  },
+  userReviewContainer: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: 'rgba(58, 28, 113, 0.05)',
+    borderRadius: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#3a1c71',
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  reviewTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#3a1c71',
+  },
+  editButton: {
+    padding: 5,
+  },
+  reviewComment: {
+    fontSize: 16,
+    color: '#333',
+    marginTop: 5,
   },
 });
