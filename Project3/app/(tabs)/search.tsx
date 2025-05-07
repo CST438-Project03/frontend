@@ -13,9 +13,15 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 
+type Game = {
+  rawgId: string;
+  title: string;
+  imageUrl: string;
+};
+
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
-  const [games, setGames] = useState([]);
+  const [games, setGames] = useState<Game[]>([]);
   const [users, setUsers] = useState([]);
   const router = useRouter();
 
@@ -39,16 +45,24 @@ export default function SearchScreen() {
     }
   };
 
+  const handleGamePress = (game: Game) => {
+    console.log('Game clicked:', game.title);
+    router.push(`/game/${game.rawgId}`);
+  };
+
   const handleSearch = () => {
     fetchResults(query);
     Keyboard.dismiss();
   };
 
-  const renderGameItem = ({ item }: any) => (
-    <View style={styles.resultCard}>
+  const renderGameItem = ({ item }: { item: Game }) => (
+    <TouchableOpacity
+      style={styles.resultCard}
+      onPress={() => handleGamePress(item)}
+    >
       <Image source={{ uri: item.imageUrl }} style={styles.resultImage} />
       <Text style={styles.resultTitle}>{item.title}</Text>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderUserItem = ({ item }: any) => (
@@ -157,4 +171,3 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
 });
-
