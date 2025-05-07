@@ -98,7 +98,6 @@ export default function HomeScreen() {
           // If not authenticated or other issue, we just won't show lists section
         } catch (listsError) {
           console.log('User not authenticated or error fetching lists');
-          // Not setting an error here as this is optional
         }
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -137,7 +136,7 @@ export default function HomeScreen() {
           {[1, 2, 3, 4, 5].map((star) => (
             <MaterialIcons
               key={star}
-              name={star <= item.rating ? "star" : "star-border"}
+              name={Math.round(item.rating / 2) >= star ? "star" : "star-border"}
               size={16}
               color="#FFD700"
             />
@@ -178,8 +177,8 @@ export default function HomeScreen() {
 
   const getPaginationRange = () => {
     const range = [];
-    const start = Math.max(1, currentPage - 2); // Show 2 pages before the current page
-    const end = Math.min(totalPages, currentPage + 2); // Show 2 pages after the current page
+    const start = Math.max(1, currentPage - 2); 
+    const end = Math.min(totalPages, currentPage + 2); 
     for (let i = start; i <= end; i++) {
       range.push(i);
     }
@@ -222,8 +221,8 @@ export default function HomeScreen() {
                   data={games}
                   renderItem={renderGameItem}
                   keyExtractor={(item) => item.rawgId}
-                  numColumns={Platform.OS === 'web' ? 6 : 3} // Adjust for mobile
-                  scrollEnabled={false} // Disable scroll within FlatList since we're in a ScrollView
+                  numColumns={Platform.OS === 'web' ? 6 : 3} 
+                  scrollEnabled={false} 
                   contentContainerStyle={styles.gamesContainer}
                 />
               ) : (
@@ -251,24 +250,23 @@ export default function HomeScreen() {
                 </View>
               </View>
             </View>
-            
-            {/* Recent Reviews Section */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Recent Reviews</Text>
-              {reviews.length > 0 ? (
-                <FlatList
-                  data={reviews}
-                  renderItem={renderReviewItem}
-                  keyExtractor={(item) => item.id.toString()}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.reviewsContainer}
-                />
-              ) : (
-                <Text style={styles.noContentText}>No reviews yet</Text>
-              )}
-            </View>
-            
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Recent Reviews</Text>
+                {isLoading ? (
+                  <ActivityIndicator size="large" color="#fff" />
+                ) : reviews.length > 0 ? (
+                  <FlatList
+                    data={reviews}
+                    renderItem={renderReviewItem}
+                    keyExtractor={(item) => item.id.toString()}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.reviewsContainer}
+                  />
+                ) : (
+                  <Text style={styles.noContentText}>No reviews yet</Text>
+                )}
+              </View>
             {/* User Lists Section - Only shown if user is logged in and has lists */}
             {userLists.length > 0 && (
               <View style={styles.section}>

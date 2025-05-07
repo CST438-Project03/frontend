@@ -80,7 +80,7 @@ export default function SearchScreen() {
 
   const handleUserPress = (user: User) => {
     console.log('User clicked:', user.username);
-    router.push(`/user/${user.id}`);
+    router.push({ pathname: '/user/[id]', params: { id: user.id } });
   };
 
   const handleSearch = () => {

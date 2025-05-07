@@ -3,12 +3,35 @@ import { View, Text, StyleSheet, Image, ActivityIndicator, ScrollView } from 're
 import { useLocalSearchParams } from 'expo-router';
 import { router } from 'expo-router';
 import { TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons'; // Add MaterialIcons
 import { Button, Modal, TextInput, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ToastAndroid, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
+// Star Rating Selector Component
+const StarRatingSelector = ({ rating, setRating, maxStars = 5 }) => {
+  return (
+    <View style={styles.starContainer}>
+      {[...Array(maxStars)].map((_, index) => {
+        const starValue = index + 1;
+        return (
+          <TouchableOpacity
+            key={starValue}
+            onPress={() => setRating(starValue.toString())}
+            style={styles.starButton}
+          >
+            <MaterialIcons
+              name={starValue <= parseInt(rating || 0) ? "star" : "star-border"}
+              size={36}
+              color="#FFD700"
+            />
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+};
 
 export default function GameDetails() {
   const { id } = useLocalSearchParams();
@@ -22,8 +45,6 @@ export default function GameDetails() {
   const [lists, setLists] = useState([]);
   const [listModalVisible, setListModalVisible] = useState(false);
   const [selectedListId, setSelectedListId] = useState(null);
-
-
 
   useEffect(() => {
     const fetchGameDetails = async () => {
@@ -47,31 +68,18 @@ export default function GameDetails() {
       }
     };
 
-
     fetchGameDetails();
   }, [id]);
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#ffffff" />
-      </View>
-    );
-  }
-
-  if (!game) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Game not found.</Text>
-      </View>
-    );
-  }
-
+  // Modified to use star rating
   const handleSubmitReview = async () => {
-    const numRating = parseInt(rating);
+    const starRating = parseInt(rating);
+    
+    // Convert 5-star rating to 10-point scale
+    const numRating = starRating * 2;
 
-    if (isNaN(numRating) || numRating < 1 || numRating > 10) {
-      Alert.alert('Invalid Rating', 'Please enter a rating between 1 and 10.');
+    if (isNaN(starRating) || starRating < 1 || starRating > 5) {
+      Alert.alert('Invalid Rating', 'Please select a rating between 1 and 5 stars.');
       return;
     }
 
@@ -81,16 +89,16 @@ export default function GameDetails() {
     }
 
     try {
-      const token = await AsyncStorage.getItem('jwtToken'); // Get the stored JWT
+      const token = await AsyncStorage.getItem('jwtToken'); 
 
       const res = await fetch(`http://localhost:8080/api/reviews/create/game/${id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Bearer ${token}`, // Add the token here
+          Authorization: `Bearer ${token}`, 
         },
         body: new URLSearchParams({
-          rating: numRating.toString(),
+          rating: numRating.toString(), // Send the converted 10-point rating
           comment,
         }).toString(),
       });
@@ -132,7 +140,7 @@ export default function GameDetails() {
       });
 
       const data = await response.json();
-      console.log('User Lists API Response:', data); //  log here
+      console.log('User Lists API Response:', data);
 
       if (response.ok) {
         setLists(data.lists || []);
@@ -180,6 +188,21 @@ export default function GameDetails() {
     }
   };
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#ffffff" />
+      </View>
+    );
+  }
+
+  if (!game) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Game not found.</Text>
+      </View>
+    );
+  }
 
   return (
     <>
@@ -225,9 +248,7 @@ export default function GameDetails() {
           </View>
   
           <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.modalButton} onPress={async () => {
-              setModalVisible(true)
-            }}>
+            <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(true)}>
               <Text style={styles.modalButtonText}>Write a Review</Text>
             </TouchableOpacity>
   
@@ -238,25 +259,17 @@ export default function GameDetails() {
               <Text style={styles.modalButtonText}>Add To List</Text>
             </TouchableOpacity>
           </View>
-  
         </ScrollView>
   
-        {/* Improved Review Modal */}
+        {/* Improved Review Modal with Star Rating */}
         <Modal visible={modalVisible} animationType="fade" transparent={true}>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Submit a Review</Text>
               
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Rating (1-10)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter rating..."
-                  keyboardType="numeric"
-                  value={rating}
-                  onChangeText={setRating}
-                  placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                />
+                <Text style={styles.inputLabel}>Rating</Text>
+                <StarRatingSelector rating={rating} setRating={setRating} />
               </View>
               
               <View style={styles.inputGroup}>
@@ -267,7 +280,7 @@ export default function GameDetails() {
                   value={comment}
                   onChangeText={setComment}
                   multiline
-                  placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                  placeholderTextColor="rgba(58, 28, 113, 0.5)"
                 />
               </View>
               
@@ -342,6 +355,7 @@ export default function GameDetails() {
     </>
   );
 }
+
 const styles = StyleSheet.create({
   background: {
     flex: 1,
@@ -364,14 +378,15 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 6,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#3a1c71',
-    textAlign: 'center',
-    marginBottom: 10,
+  starContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 10,
   },
-  // New grid layout for info
+  starButton: {
+    padding: 5,
+  },
   infoGrid: {
     display: 'flex',
     flexDirection: 'row',
@@ -391,7 +406,6 @@ const styles = StyleSheet.create({
     color: '#3a1c71',
     marginBottom: 8,
   },
-  // Improved description styling
   descriptionContainer: {
     marginTop: 10,
   },
@@ -406,6 +420,35 @@ const styles = StyleSheet.create({
     color: '#333',
     lineHeight: 24,
     textAlign: 'left',
+  },
+  inputGroup: {
+    marginBottom: 16,
+    width: '100%',
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3a1c71',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  input: {
+    backgroundColor: 'rgba(58, 28, 113, 0.1)',
+    color: '#333',
+    padding: 12,
+    marginBottom: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(58, 28, 113, 0.2)',
+  },
+  listsContainer: {
+    maxHeight: 300,
+    marginVertical: 12,
+  },
+  noListsText: {
+    textAlign: 'center',
+    color: '#666',
+    marginVertical: 20,
   },
   errorText: {
     fontSize: 18,
@@ -437,35 +480,6 @@ const styles = StyleSheet.create({
     color: '#3a1c71',
     textAlign: 'center',
   },
-  // Improved form elements
-  inputGroup: {
-    marginBottom: 16,
-    width: '100%',
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#3a1c71',
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: 'rgba(58, 28, 113, 0.1)',
-    color: '#333',
-    padding: 12,
-    marginBottom: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(58, 28, 113, 0.2)',
-  },
-  listsContainer: {
-    maxHeight: 300,
-    marginVertical: 12,
-  },
-  noListsText: {
-    textAlign: 'center',
-    color: '#666',
-    marginVertical: 20,
-  },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -488,13 +502,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 30,
   },
-  buttonWrapper: {
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  equalButton: {
-    flex: 1,
-    alignSelf: 'stretch',
+  divider: {
+    height: 1, 
+    backgroundColor: 'rgba(58, 28, 113, 0.2)', 
+    marginVertical: 10,
+    width: '100%',
   },
   gameInfoCard: {
     backgroundColor: '#fff',
@@ -518,12 +530,6 @@ const styles = StyleSheet.create({
     color: '#3a1c71',
     marginBottom: 15,
     textAlign: 'center',
-  },
-  divider: {
-    height: 1, 
-    backgroundColor: 'rgba(58, 28, 113, 0.2)', 
-    marginVertical: 10,
-    width: '100%',
   },
   listCard: {
     backgroundColor: '#fff',
