@@ -193,106 +193,145 @@ export default function GameDetails() {
           <TouchableOpacity onPress={() => router.push('/(tabs)/home')} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-
+  
           <Image source={{ uri: game.imageUrl }} style={styles.gameImage} />
           <View style={styles.gameInfoCard}>
             <Text style={styles.cardTitle}>{game.title}</Text>
-            <View style={{ height: 1, backgroundColor: '#444', marginVertical: 10 }} />
-            <Text style={styles.genre}>Genre: {game.genre}</Text>
-            <Text style={styles.info}>Release Date: {game.releaseDate}</Text>
-            <Text style={styles.info}>Rating: {game.rating}</Text>
-            <Text style={styles.info}>Platforms: {game.platforms}</Text>
-            <Text style={styles.info}>Developers: {game.developers}</Text>
-            <Text style={styles.description}>{game.description}</Text>
+            <View style={styles.divider} />
+            
+            {/* Improved info section with consistent formatting */}
+            <View style={styles.infoGrid}>
+              <Text style={styles.infoLabel}>Genre:</Text>
+              <Text style={styles.infoValue}>{game.genre}</Text>
+              
+              <Text style={styles.infoLabel}>Release Date:</Text>
+              <Text style={styles.infoValue}>{game.releaseDate}</Text>
+              
+              <Text style={styles.infoLabel}>Rating:</Text>
+              <Text style={styles.infoValue}>{game.rating}</Text>
+              
+              <Text style={styles.infoLabel}>Platforms:</Text>
+              <Text style={styles.infoValue}>{game.platforms}</Text>
+              
+              <Text style={styles.infoLabel}>Developers:</Text>
+              <Text style={styles.infoValue}>{game.developers}</Text>
+            </View>
+            
+            {/* Improved description section */}
+            <View style={styles.descriptionContainer}>
+              <Text style={styles.descriptionTitle}>Description</Text>
+              <Text style={styles.description}>{game.description}</Text>
+            </View>
           </View>
-
-
+  
           <View style={styles.actionButtons}>
-
             <TouchableOpacity style={styles.modalButton} onPress={async () => {
               setModalVisible(true)
             }}>
               <Text style={styles.modalButtonText}>Write a Review</Text>
             </TouchableOpacity>
-
-
+  
             <TouchableOpacity style={styles.modalButton} onPress={async () => {
               await fetchUserLists();
               setListModalVisible(true);
             }}>
               <Text style={styles.modalButtonText}>Add To List</Text>
             </TouchableOpacity>
-
-
           </View>
-
+  
         </ScrollView>
-
-        <Modal visible={modalVisible} animationType="slide" transparent={true}>
+  
+        {/* Improved Review Modal */}
+        <Modal visible={modalVisible} animationType="fade" transparent={true}>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Submit a Review</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Rating (1–5)"
-                keyboardType="numeric"
-                value={rating}
-                onChangeText={setRating}
-                placeholderTextColor="#fff"
-              />
-              <TextInput
-                style={[styles.input, { height: 80 }]}
-                placeholder="Comment"
-                value={comment}
-                onChangeText={setComment}
-                multiline
-                placeholderTextColor="#fff"
-              />
-              <View style={styles.modalButtons}>
               
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Rating (1-10)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter rating..."
+                  keyboardType="numeric"
+                  value={rating}
+                  onChangeText={setRating}
+                  placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                />
+              </View>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Your Review</Text>
+                <TextInput
+                  style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
+                  placeholder="Share your thoughts about this game..."
+                  value={comment}
+                  onChangeText={setComment}
+                  multiline
+                  placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                />
+              </View>
+              
+              <View style={styles.modalButtons}>
                 <TouchableOpacity style={[styles.modalButton]} onPress={handleSubmitReview}>
-                                  <Text style={styles.modalButtonText}>Cancel</Text>
-                                </TouchableOpacity>
-
-               
-                  <TouchableOpacity style={[styles.modalButton, { backgroundColor: '#444' }]} onPress={() => setModalVisible(false)}>
-                                    <Text style={styles.modalButtonText}>Cancel</Text>
-                                  </TouchableOpacity>
+                  <Text style={styles.modalButtonText}>Submit</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.modalButton, { backgroundColor: '#444' }]} 
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
         </Modal>
-
-        <Modal visible={listModalVisible} animationType="slide" transparent={true}>
+  
+        {/* Improved List Modal */}
+        <Modal visible={listModalVisible} animationType="fade" transparent={true}>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Select a List</Text>
-
-              {lists.map((list) => (
-                <TouchableOpacity
-                  key={list.id}
-                  onPress={() => setSelectedListId(list.id)}
-                  style={[
-                    styles.listCard,
-                    selectedListId === list.id && styles.listCardSelected
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.listCardText,
-                      selectedListId === list.id && { color: '#fff' }
-                    ]}
-                  >
-                    {list.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-
+              
+              <View style={styles.listsContainer}>
+                {lists.length > 0 ? (
+                  lists.map((list) => (
+                    <TouchableOpacity
+                      key={list.id}
+                      onPress={() => setSelectedListId(list.id)}
+                      style={[
+                        styles.listCard,
+                        selectedListId === list.id && styles.listCardSelected
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.listCardText,
+                          selectedListId === list.id && { color: '#fff' }
+                        ]}
+                      >
+                        {list.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text style={styles.noListsText}>No lists available. Create a list first.</Text>
+                )}
+              </View>
+  
               <View style={styles.modalButtons}>
-                <TouchableOpacity style={[styles.modalButton,]} onPress={handleAddGameToList}>
+                <TouchableOpacity 
+                  style={[styles.modalButton]} 
+                  onPress={handleAddGameToList}
+                  disabled={!selectedListId}
+                >
                   <Text style={styles.modalButtonText}>Add</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.modalButton, { backgroundColor: '#444' }]} onPress={() => setListModalVisible(false)}>
+                
+                <TouchableOpacity 
+                  style={[styles.modalButton, { backgroundColor: '#444' }]} 
+                  onPress={() => setListModalVisible(false)}
+                >
                   <Text style={styles.modalButtonText}>Cancel</Text>
                 </TouchableOpacity>
               </View>
@@ -301,7 +340,6 @@ export default function GameDetails() {
         </Modal>
       </LinearGradient>
     </>
-
   );
 }
 const styles = StyleSheet.create({
@@ -333,27 +371,41 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
   },
-  genre: {
-    fontSize: 18,
-    color: '#3a1c71',
-    textAlign: 'center',
-    marginBottom: 10,
-    fontWeight: 'bold'
+  // New grid layout for info
+  infoGrid: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 15,
   },
-  info: {
+  infoLabel: {
+    width: '30%',
     fontSize: 16,
     color: '#3a1c71',
-    textAlign: 'center',
-    marginBottom: 5,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  infoValue: {
+    width: '70%',
+    fontSize: 16,
+    color: '#3a1c71',
+    marginBottom: 8,
+  },
+  // Improved description styling
+  descriptionContainer: {
+    marginTop: 10,
+  },
+  descriptionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#3a1c71',
+    marginBottom: 8,
   },
   description: {
     fontSize: 16,
-    color: '#3a1c71',
+    color: '#333',
+    lineHeight: 24,
     textAlign: 'left',
-    marginTop: 15,
-    lineHeight: 22,
-    fontWeight: 'bold'
   },
   errorText: {
     fontSize: 18,
@@ -371,6 +423,7 @@ const styles = StyleSheet.create({
     padding: 24,
     borderRadius: 16,
     width: '85%',
+    maxWidth: 500,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
@@ -380,16 +433,38 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 12,
+    marginBottom: 16,
     color: '#3a1c71',
     textAlign: 'center',
   },
+  // Improved form elements
+  inputGroup: {
+    marginBottom: 16,
+    width: '100%',
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3a1c71',
+    marginBottom: 8,
+  },
   input: {
-    backgroundColor: 'gray',
-    color: '#fff',
+    backgroundColor: 'rgba(58, 28, 113, 0.1)',
+    color: '#333',
     padding: 12,
     marginBottom: 12,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(58, 28, 113, 0.2)',
+  },
+  listsContainer: {
+    maxHeight: 300,
+    marginVertical: 12,
+  },
+  noListsText: {
+    textAlign: 'center',
+    color: '#666',
+    marginVertical: 20,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -411,6 +486,7 @@ const styles = StyleSheet.create({
     width: 320,
     alignSelf: 'center',
     marginTop: 20,
+    marginBottom: 30,
   },
   buttonWrapper: {
     flex: 1,
@@ -443,6 +519,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: 'center',
   },
+  divider: {
+    height: 1, 
+    backgroundColor: 'rgba(58, 28, 113, 0.2)', 
+    marginVertical: 10,
+    width: '100%',
+  },
   listCard: {
     backgroundColor: '#fff',
     padding: 15,
@@ -464,7 +546,7 @@ const styles = StyleSheet.create({
   modalButton: {
     flex: 1,
     backgroundColor: '#3a1c71',
-    padding: 10,
+    padding: 12,
     borderRadius: 8,
     alignItems: 'center',
     marginHorizontal: 5
