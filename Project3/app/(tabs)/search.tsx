@@ -31,7 +31,6 @@ type Game = {
 type User = {
   id: string;
   username: string;
-  // Add other user properties as needed
 };
 
 export default function SearchScreen() {
