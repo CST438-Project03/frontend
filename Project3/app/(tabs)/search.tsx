@@ -11,11 +11,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   SafeAreaView,
-  ScrollView
+  ScrollView,
+  FlatList
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useRouter } from 'expo-router';
 
 // Define constants
 const isWeb = Platform.OS === 'web';
@@ -27,32 +28,46 @@ type Game = {
   imageUrl: string;
 };
 
+type User = {
+  id: string;
+  username: string;
+};
+
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const [games, setGames] = useState<Game[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-  const BASE_URL = 'http://localhost:8080/api/games/search';
+  const BASE_URL = 'http://localhost:8080/api';
 
-  const fetchGames = async (searchText: string) => {
+  const fetchResults = async (searchText: string) => {
     if (!searchText) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const response = await fetch(`${BASE_URL}?query=${encodeURIComponent(searchText)}`);
-      
-      if (!response.ok) {
+      // Search both games and users simultaneously
+      const [gameResponse, userResponse] = await Promise.all([
+        fetch(`${BASE_URL}/games/search?query=${encodeURIComponent(searchText)}`),
+        fetch(`${BASE_URL}/user/search?query=${encodeURIComponent(searchText)}`),
+      ]);
+
+      if (!gameResponse.ok) {
         throw new Error('Failed to fetch games');
       }
       
-      const data = await response.json();
-      setGames(data);
+      const gameData = await gameResponse.json();
+      const userData = await userResponse.json();
+
+      setGames(gameData);
+      setUsers(userData);
     } catch (error) {
       console.error('Search error:', error);
-      setError('Failed to fetch games. Please try again.');
+      setError('Failed to fetch results. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -63,9 +78,14 @@ export default function SearchScreen() {
     router.push(`/game/${game.rawgId}`);
   };
 
+  const handleUserPress = (user: User) => {
+    console.log('User clicked:', user.username);
+    router.push(`/user/${user.id}`);
+  };
+
   const handleSearch = () => {
     if (query.trim()) {
-      fetchGames(query.trim());
+      fetchResults(query.trim());
       Keyboard.dismiss();
     }
   };
@@ -73,6 +93,7 @@ export default function SearchScreen() {
   const handleClearSearch = () => {
     setQuery('');
     setGames([]);
+    setUsers([]);
     setError(null);
   };
 
@@ -86,14 +107,14 @@ export default function SearchScreen() {
       >
         <View style={styles.mainContainer}>
           <View style={styles.content}>
-            <Text style={styles.title}>Game Search</Text>
+            <Text style={styles.title}>Search</Text>
             
             <View style={styles.searchRow}>
               <View style={styles.inputWrapper}>
                 <MaterialIcons name="search" size={20} color="#3a1c71" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Search for games..."
+                  placeholder="Search for games or users..."
                   placeholderTextColor="#999"
                   value={query}
                   onChangeText={setQuery}
@@ -130,47 +151,76 @@ export default function SearchScreen() {
               {isLoading ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="large" color="#3a1c71" />
-                  <Text style={styles.loadingText}>Searching games...</Text>
-                </View>
-              ) : games.length > 0 ? (
-                <View style={styles.gameGrid}>
-                  {games.map((game, index) => (
-                    <TouchableOpacity
-                      key={`${game.rawgId}-${index}`}
-                      style={styles.gameCard}
-                      onPress={() => handleGamePress(game)}
-                      activeOpacity={0.8}
-                    >
-                      <View style={styles.imageContainer}>
-                        <Image 
-                          source={{ uri: game.imageUrl }} 
-                          style={styles.gameImage} 
-                          resizeMode="cover"
-                        />
-                      </View>
-                      <Text style={styles.gameTitle} numberOfLines={1} ellipsizeMode="tail">
-                        {game.title}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                  <Text style={styles.loadingText}>Searching...</Text>
                 </View>
               ) : (
-                <View style={styles.noResultsContainer}>
-                  {query.trim() ? (
-                    <>
-                      <MaterialIcons name="search-off" size={64} color="#d76d77" />
-                      <Text style={styles.noResultsText}>No games found</Text>
-                      <Text style={styles.noResultsSubtext}>Try a different search term</Text>
-                    </>
-                  ) : (
-                    <>
-                      <MaterialIcons name="videogame-asset" size={64} color="#3a1c71" />
-                      <Text style={styles.initialStateText}>
-                        Search for your favorite games
-                      </Text>
-                    </>
+                <>
+                  {/* Users Section */}
+                  {users.length > 0 && (
+                    <View style={styles.sectionContainer}>
+                      <Text style={styles.sectionTitle}>Users</Text>
+                      {users.map((user, index) => (
+                        <TouchableOpacity
+                          key={`user-${user.id}-${index}`}
+                          style={styles.userCard}
+                          onPress={() => handleUserPress(user)}
+                          activeOpacity={0.8}
+                        >
+                          <MaterialIcons name="person" size={24} color="#3a1c71" style={styles.userIcon} />
+                          <Text style={styles.userName}>{user.username}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
                   )}
-                </View>
+
+                  {/* Games Section */}
+                  {games.length > 0 && (
+                    <View style={styles.sectionContainer}>
+                      <Text style={styles.sectionTitle}>Games</Text>
+                      <View style={styles.gameGrid}>
+                        {games.map((game, index) => (
+                          <TouchableOpacity
+                            key={`game-${game.rawgId}-${index}`}
+                            style={styles.gameCard}
+                            onPress={() => handleGamePress(game)}
+                            activeOpacity={0.8}
+                          >
+                            <View style={styles.imageContainer}>
+                              <Image 
+                                source={{ uri: game.imageUrl }} 
+                                style={styles.gameImage} 
+                                resizeMode="cover"
+                              />
+                            </View>
+                            <Text style={styles.gameTitle} numberOfLines={1} ellipsizeMode="tail">
+                              {game.title}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* No Results State */}
+                  {users.length === 0 && games.length === 0 && (
+                    <View style={styles.noResultsContainer}>
+                      {query.trim() ? (
+                        <>
+                          <MaterialIcons name="search-off" size={64} color="#d76d77" />
+                          <Text style={styles.noResultsText}>No results found</Text>
+                          <Text style={styles.noResultsSubtext}>Try a different search term</Text>
+                        </>
+                      ) : (
+                        <>
+                          <MaterialIcons name="search" size={64} color="#3a1c71" />
+                          <Text style={styles.initialStateText}>
+                            Search for games and users
+                          </Text>
+                        </>
+                      )}
+                    </View>
+                  )}
+                </>
               )}
             </ScrollView>
           </View>
@@ -320,6 +370,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
+  sectionContainer: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#3a1c71',
+    marginBottom: 10,
+    paddingLeft: 5,
+  },
   gameGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -361,6 +421,36 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     textAlign: 'center',
+  },
+  userCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 10,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
+      }
+    }),
+  },
+  userIcon: {
+    marginRight: 10,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
   },
   noResultsContainer: {
     flex: 1,
