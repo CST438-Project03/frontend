@@ -81,7 +81,7 @@ export default function Layout() {
   // Function to check admin status
   const checkAdminStatus = async (token: string): Promise<void> => {
     try {
-      const response = await fetch(`${API_URL}/api/user/me`, {
+      const response = await fetch(`${API_URL}/user/me`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
