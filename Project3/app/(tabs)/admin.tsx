@@ -26,7 +26,7 @@ import CreateUserModal from '../admin/createUserModal';
 // Define API URL based on platform
 const isWeb = Platform.OS === 'web';
 export const API_URL = isWeb 
-  ? 'http://localhost:8080' 
+  ? 'https://cst438-project3-2224023aed89.herokuapp.com' 
   : Platform.OS === 'ios'
     ? 'http://127.0.0.1:8080'
     : 'http://10.0.2.2:8080'; // For Android emulator

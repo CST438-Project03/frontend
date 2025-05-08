@@ -23,7 +23,7 @@ const isSmallScreen = windowWidth < 375;
 
 // API URLs adjusted by platform
 const API_URL = isWeb 
-  ? 'http://localhost:8080' 
+  ? 'https://cst438-project3-2224023aed89.herokuapp.com' 
   : 'http://10.0.2.2:8080'; 
 
 const OAUTH2_URL = isWeb 

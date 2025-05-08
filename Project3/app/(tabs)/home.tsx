@@ -68,7 +68,7 @@ export default function HomeScreen() {
       try {
         // Fetch games
         const gamesResponse = await fetch(
-          `http://localhost:8080/api/games/fetchFromRawg?page=${currentPage}&pageSize=${gamesPerPage}`
+          `https://cst438-project3-2224023aed89.herokuapp.com/api/games/fetchFromRawg?page=${currentPage}&pageSize=${gamesPerPage}`
         );
         if (!gamesResponse.ok) {
           throw new Error(`Failed to fetch games: ${gamesResponse.statusText}`);
@@ -78,7 +78,7 @@ export default function HomeScreen() {
         setTotalPages(gamesData.totalPages || 1);
         
         // Fetch recent reviews
-        const reviewsResponse = await fetch('http://localhost:8080/public/reviews/recent');
+        const reviewsResponse = await fetch('https://cst438-project3-2224023aed89.herokuapp.com/public/reviews/recent');
         if (!reviewsResponse.ok) {
           throw new Error(`Failed to fetch reviews: ${reviewsResponse.statusText}`);
         }
@@ -87,7 +87,7 @@ export default function HomeScreen() {
         
         // Fetch user lists (if authenticated)
         try {
-          const listsResponse = await fetch('http://localhost:8080/api/lists/getUserLists', {
+          const listsResponse = await fetch('https://cst438-project3-2224023aed89.herokuapp.com/api/lists/getUserLists', {
             credentials: 'include', // Include cookies for authentication
           });
           

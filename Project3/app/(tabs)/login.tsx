@@ -25,11 +25,11 @@ const isSmallScreen = windowWidth < 375;
 
 // API URLs adjusted by platform
 const API_URL_AUTH = isWeb 
-  ? 'http://localhost:8080/auth' 
+  ? 'https://cst438-project3-2224023aed89.herokuapp.com/auth' 
   : 'http://10.0.2.2:8080/auth';
 
 const OAUTH2_URL = isWeb 
-  ? 'http://localhost:8080/oauth2/authorization/google' 
+  ? 'https://cst438-project3-2224023aed89.herokuapp.com/oauth2/authorization/google' 
   : 'http://10.0.2.2:8080/oauth2/authorization/google';
 
 interface LoginResponse {
