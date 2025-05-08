@@ -25,7 +25,7 @@ const isWeb = Platform.OS === 'web';
 
 // API URL based on platform
 const API_URL = isWeb 
-  ? 'http://localhost:8080/api'
+  ? 'https://cst438-project3-2224023aed89.herokuapp.com/api'
   : 'http://10.0.2.2:8080/api'; 
 
 const UserProfile = () => {
