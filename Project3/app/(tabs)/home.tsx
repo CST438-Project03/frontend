@@ -59,6 +59,10 @@ export default function HomeScreen() {
   
   const gamesPerPage = 18; // 6 games per row, 3 rows per page
   const router = useRouter();
+  const windowWidth = Dimensions.get('window').width;
+  const isWeb = Platform.OS === 'web';
+  // Calculate number of columns dynamically based on screen width
+  const numColumns = isWeb ? 6 : (windowWidth >= 768 ? 4 : 3);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -116,8 +120,16 @@ export default function HomeScreen() {
       style={styles.gameCard}
       onPress={() => router.push(`/game/${item.rawgId}`)}
     >
-      <Image source={{ uri: item.imageUrl }} style={styles.gameImage} />
-      <Text style={styles.gameTitle}>{item.title}</Text>
+      <View style={styles.gameImageContainer}>
+        <Image 
+          source={{ uri: item.imageUrl }} 
+          style={styles.gameImage} 
+          resizeMode="cover"
+        />
+      </View>
+      <Text style={styles.gameTitle} numberOfLines={2} ellipsizeMode="tail">
+        {item.title}
+      </Text>
     </TouchableOpacity>
   );
 
@@ -129,9 +141,12 @@ export default function HomeScreen() {
       <Image 
         source={{ uri: item.videoGame.imageUrl }} 
         style={styles.reviewGameImage} 
+        resizeMode="cover"
       />
       <View style={styles.reviewContent}>
-        <Text style={styles.reviewGameTitle}>{item.videoGame.title}</Text>
+        <Text style={styles.reviewGameTitle} numberOfLines={1} ellipsizeMode="tail">
+          {item.videoGame.title}
+        </Text>
         <View style={styles.ratingContainer}>
           {[1, 2, 3, 4, 5].map((star) => (
             <MaterialIcons
@@ -154,7 +169,9 @@ export default function HomeScreen() {
       onPress={() => router.push(`/list/${item.id}`)}
     >
       <View style={styles.listHeader}>
-        <Text style={styles.listTitle}>{item.name}</Text>
+        <Text style={styles.listTitle} numberOfLines={1} ellipsizeMode="tail">
+          {item.name}
+        </Text>
         <Text style={styles.listGameCount}>{item.games.length} games</Text>
       </View>
       
@@ -164,6 +181,7 @@ export default function HomeScreen() {
             key={index}
             source={{ uri: game.imageUrl }} 
             style={styles.listThumbnail} 
+            resizeMode="cover"
           />
         ))}
         {item.games.length > 3 && (
@@ -201,6 +219,28 @@ export default function HomeScreen() {
     );
   }
 
+  if (error) {
+    return (
+      <LinearGradient
+        colors={['#3a1c71', '#d76d77', '#ffaf7b']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.background}
+      >
+        <View style={styles.errorContainer}>
+          <MaterialIcons name="error-outline" size={60} color="#fff" />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => setCurrentPage(currentPage)}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <LinearGradient
@@ -209,7 +249,7 @@ export default function HomeScreen() {
         end={{ x: 1, y: 1 }}
         style={styles.background}
       >
-        <ScrollView style={styles.scrollView}>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           <View style={styles.container}>
             <Text style={styles.title}>Welcome to GameStack!</Text>
             
@@ -217,20 +257,34 @@ export default function HomeScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Featured Games</Text>
               {games.length > 0 ? (
+                // Use FlatList consistently for both mobile and web
                 <FlatList
                   data={games}
                   renderItem={renderGameItem}
                   keyExtractor={(item) => item.rawgId}
-                  numColumns={Platform.OS === 'web' ? 6 : 3} 
-                  scrollEnabled={false} 
-                  contentContainerStyle={styles.gamesContainer}
+                  numColumns={numColumns}
+                  key={numColumns} // Force re-render when number of columns changes
+                  scrollEnabled={false}
+                  contentContainerStyle={styles.gamesGrid}
                 />
               ) : (
-                <Text style={styles.noContentText}>No games available</Text>
+                <View style={styles.emptyStateContainer}>
+                  <MaterialIcons name="videogame-asset" size={60} color="rgba(255,255,255,0.5)" />
+                  <Text style={styles.noContentText}>No games available</Text>
+                </View>
               )}
               
               <View style={styles.paginationContainer}>
                 <View style={styles.paginationButtons}>
+                  {currentPage > 1 && (
+                    <TouchableOpacity
+                      onPress={() => setCurrentPage(currentPage - 1)}
+                      style={styles.pageButton}
+                    >
+                      <MaterialIcons name="navigate-before" size={24} color="#3a1c71" />
+                    </TouchableOpacity>
+                  )}
+                  
                   {getPaginationRange().map((page) => (
                     <TouchableOpacity
                       key={page}
@@ -241,32 +295,48 @@ export default function HomeScreen() {
                       ]}
                     >
                       <Text
-                        style={page === currentPage ? styles.activePageText : styles.pageText}
+                        style={[
+                          styles.pageText,
+                          page === currentPage && styles.activePageText
+                        ]}
                       >
                         {page}
                       </Text>
                     </TouchableOpacity>
                   ))}
+                  
+                  {currentPage < totalPages && (
+                    <TouchableOpacity
+                      onPress={() => setCurrentPage(currentPage + 1)}
+                      style={styles.pageButton}
+                    >
+                      <MaterialIcons name="navigate-next" size={24} color="#3a1c71" />
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
             </View>
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Recent Reviews</Text>
-                {isLoading ? (
-                  <ActivityIndicator size="large" color="#fff" />
-                ) : reviews.length > 0 ? (
-                  <FlatList
-                    data={reviews}
-                    renderItem={renderReviewItem}
-                    keyExtractor={(item) => item.id.toString()}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.reviewsContainer}
-                  />
-                ) : (
+              
+            {/* Recent Reviews Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Recent Reviews</Text>
+              {reviews.length > 0 ? (
+                <FlatList
+                  data={reviews}
+                  renderItem={renderReviewItem}
+                  keyExtractor={(item) => item.id.toString()}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.reviewsContainer}
+                />
+              ) : (
+                <View style={styles.emptyStateContainer}>
+                  <MaterialIcons name="rate-review" size={60} color="rgba(255,255,255,0.5)" />
                   <Text style={styles.noContentText}>No reviews yet</Text>
-                )}
-              </View>
+                </View>
+              )}
+            </View>
+            
             {/* User Lists Section - Only shown if user is logged in and has lists */}
             {userLists.length > 0 && (
               <View style={styles.section}>
@@ -288,8 +358,21 @@ export default function HomeScreen() {
   );
 }
 
+// Dynamically calculate dimensions based on screen size
+const windowWidth = Dimensions.get('window').width;
+const windowHeight = Dimensions.get('window').height;
 const isWeb = Platform.OS === 'web';
-const screenWidth = Dimensions.get('window').width;
+const numColumns = isWeb ? 6 : (windowWidth >= 768 ? 4 : 3);
+const cardMargin = 8;
+
+// Calculate card width based on screen size and number of columns
+const calculateCardWidth = () => {
+  const contentWidth = isWeb ? Math.min(1200, windowWidth * 0.9) : windowWidth * 0.9;
+  const totalMargin = cardMargin * 2 * numColumns;
+  return (contentWidth - totalMargin) / numColumns;
+};
+
+const cardWidth = calculateCardWidth();
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -315,21 +398,51 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginTop: 10,
     fontSize: 16,
+    fontWeight: '500',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: '#fff',
+    marginTop: 16,
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   title: {
-    fontSize: 40,
+    fontSize: isWeb ? 36 : 28,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: Platform.OS === 'web' ? 40 : 20,
     marginBottom: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
   },
   section: {
     width: '100%',
     maxWidth: isWeb ? 1200 : '95%',
     marginVertical: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 16,
     padding: 20,
     ...Platform.select({
       ios: {
@@ -350,35 +463,64 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 15,
-    marginLeft: 10,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ffaf7b',
+    paddingLeft: 12,
   },
-  gamesContainer: {
-    justifyContent: 'center',
+  gamesGrid: {
+    alignItems: 'center',
     paddingBottom: 10,
   },
   gameCard: {
-    margin: 10,
-    alignItems: 'center',
-    width: isWeb ? (screenWidth / 8) : (screenWidth / 3.5),
+    margin: cardMargin,
+    width: cardWidth,
+    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+    borderRadius: 12,
+    padding: 8,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+      web: {
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+      }
+    }),
+  },
+  gameImageContainer: {
+    aspectRatio: 3/4,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#000',
   },
   gameImage: {
     width: '100%',
-    height: 150,
-    borderRadius: 10,
+    height: '100%',
   },
   gameTitle: {
-    marginTop: 10,
+    marginTop: 8,
     fontSize: 14,
     color: 'white',
     textAlign: 'center',
+    height: 40,
+  },
+  emptyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
   },
   noContentText: {
     fontSize: 18,
-    color: 'white',
+    color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 20,
+    marginTop: 16,
   },
   paginationContainer: {
     marginTop: 20,
@@ -387,36 +529,53 @@ const styles = StyleSheet.create({
   paginationButtons: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
     marginTop: 10,
-    gap: 10,
   },
   pageButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: '#fff',
-    borderRadius: 6,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+      }
+    }),
   },
   activePageButton: {
     backgroundColor: '#3a1c71',
   },
   pageText: {
     color: '#3a1c71',
-    fontWeight: 'normal',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   activePageText: {
     color: 'white',
-    fontWeight: 'bold',
   },
   // Review styles
   reviewsContainer: {
     paddingBottom: 10,
   },
   reviewCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 12,
     padding: 15,
     marginRight: 15,
-    width: 280,
+    width: isWeb ? 280 : Math.min(280, windowWidth * 0.8),
     flexDirection: 'row',
     ...Platform.select({
       ios: {
@@ -469,11 +628,11 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   listCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 12,
     padding: 15,
     marginRight: 15,
-    width: 220,
+    width: isWeb ? 220 : Math.min(220, windowWidth * 0.7),
     ...Platform.select({
       ios: {
         shadowColor: '#000',

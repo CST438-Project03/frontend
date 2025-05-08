@@ -7,8 +7,9 @@ import {
   SafeAreaView, 
   StyleSheet, 
   Platform,
-  Image,
-  StatusBar
+  StatusBar,
+  Modal,
+  ScrollView
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -22,6 +23,9 @@ const COLORS = {
   border: 'transparent', 
   logoBackground: 'rgba(240, 240, 240, 0.2)',
   navText: 'rgba(36, 33, 33, 0.79)',
+  modalBackground: 'rgba(255, 255, 255, 0.95)',
+  modalDivider: '#e0e0e0',
+  modalOverlay: 'rgba(0, 0, 0, 0.5)'
 };
 
 export default function Layout() {
@@ -29,19 +33,23 @@ export default function Layout() {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
 
+  // Platform detection
+  const isWeb = Platform.OS === 'web';
+  const isAndroid = Platform.OS === 'android';
+  
   // API URL based on platform
-  const isWeb: boolean = Platform.OS === 'web';
-  const API_URL: string = isWeb 
+  const API_URL = isWeb 
     ? 'http://localhost:8080' 
     : 'http://10.0.2.2:8080';
 
   // Navigation items
   const navItems = [
-    { name: 'Home', route: '/home' },
-    { name: 'Lists', route: '/userListsAndReviews' },
-    { name: 'Profile', route: '/userProfile' },
-    { name: 'Search', route: '/search' },
+    { name: 'Home', route: '/home', icon: 'home' },
+    { name: 'Lists', route: '/userListsAndReviews', icon: 'list' },
+    { name: 'Profile', route: '/userProfile', icon: 'person' },
+    { name: 'Search', route: '/search', icon: 'search' },
   ];
 
   // Hidden routes that don't show navigation
@@ -52,11 +60,11 @@ export default function Layout() {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        const token: string | null = isWeb 
+        const token = isWeb 
           ? localStorage.getItem('jwtToken') 
           : await AsyncStorage.getItem('jwtToken');
         
-        const loggedIn: boolean = !!token;
+        const loggedIn = !!token;
         setIsLoggedIn(loggedIn);
         
         // Check admin status if logged in
@@ -79,7 +87,7 @@ export default function Layout() {
   }, []);
 
   // Function to check admin status
-  const checkAdminStatus = async (token: string): Promise<void> => {
+  const checkAdminStatus = async (token) => {
     try {
       const response = await fetch(`${API_URL}/api/user/me`, {
         method: 'GET',
@@ -101,8 +109,13 @@ export default function Layout() {
   };
 
   // Logout function
-  const handleLogout = (): void => {
+  const handleLogout = () => {
     console.log("Logout button clicked");
+    
+    // Close menu if open (Android)
+    if (menuVisible) {
+      setMenuVisible(false);
+    }
     
     // Clear token on web
     if (isWeb) {
@@ -127,7 +140,7 @@ export default function Layout() {
       
       // Update state and navigate
       setIsLoggedIn(false);
-      router.push('/' as any);
+      router.push('/');
     } else {
       AsyncStorage.getItem('jwtToken')
         .then(token => {
@@ -163,8 +176,17 @@ export default function Layout() {
         .finally(() => {
           // Always update state and navigate
           setIsLoggedIn(false);
-          router.push('/' as any);
+          router.push('/');
         });
+    }
+  };
+
+  // Handle navigation item press
+  const handleNavPress = (route) => {
+    router.push(route);
+    // Close menu if on Android
+    if (!isWeb) {
+      setMenuVisible(false);
     }
   };
 
@@ -172,6 +194,84 @@ export default function Layout() {
   if (!isLoggedIn && hiddenRoutes.includes(pathname)) {
     return <Slot />;
   }
+
+  // Android dropdown menu
+  const renderAndroidMenu = () => {
+    return (
+      <Modal
+        visible={menuVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={() => setMenuVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>GameStack</Text>
+              <Pressable onPress={() => setMenuVisible(false)}>
+                <MaterialIcons name="close" size={24} color={COLORS.navText} />
+              </Pressable>
+            </View>
+            
+            <ScrollView>
+              {navItems.map(({ name, route, icon }) => (
+                <Pressable
+                  key={route}
+                  style={[
+                    styles.modalItem,
+                    pathname === route && styles.activeModalItem
+                  ]}
+                  onPress={() => handleNavPress(route)}
+                >
+                  <MaterialIcons 
+                    name={icon} 
+                    size={22} 
+                    color={pathname === route ? COLORS.activeText : COLORS.navText} 
+                  />
+                  <Text
+                    style={[
+                      styles.modalItemText,
+                      pathname === route && styles.activeText,
+                    ]}
+                  >
+                    {name}
+                  </Text>
+                </Pressable>
+              ))}
+              
+              <View style={styles.modalDivider} />
+              
+              {isAdmin && (
+                <Pressable
+                  style={styles.modalItem}
+                  onPress={() => {
+                    setMenuVisible(false);
+                    router.push('/admin');
+                  }}
+                >
+                  <MaterialIcons name="admin-panel-settings" size={22} color={COLORS.navText} />
+                  <Text style={styles.modalItemText}>Admin Panel</Text>
+                </Pressable>
+              )}
+              
+              {isLoggedIn && (
+                <Pressable 
+                  style={styles.modalItem}
+                  onPress={handleLogout}
+                >
+                  <MaterialIcons name="logout" size={22} color={COLORS.navText} />
+                  <Text style={styles.modalItemText}>Logout</Text>
+                </Pressable>
+              )}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -189,57 +289,76 @@ export default function Layout() {
             </View>
           </View>
 
-          {/* Navigation Routes in the Middle */}
-          <View style={styles.routesContainer}>
-            {navItems.map(({ name, route }) => (
-              <Pressable
-                key={route}
-                onPress={() => router.push(route)}
-                style={styles.navItem}
-              >
-                <Text
-                  style={[
-                    styles.navText,
-                    pathname === route && styles.activeText,
-                  ]}
+          {/* Navigation - Web shows top nav, Android shows menu button */}
+          {isWeb ? (
+            // Web top navigation
+            <View style={styles.routesContainer}>
+              {navItems.map(({ name, route }) => (
+                <Pressable
+                  key={route}
+                  onPress={() => router.push(route)}
+                  style={styles.navItem}
                 >
-                  {name}
-                </Text>
+                  <Text
+                    style={[
+                      styles.navText,
+                      pathname === route && styles.activeText,
+                    ]}
+                  >
+                    {name}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : (
+            // Android - burger menu
+            <View style={styles.mobileMenuButton}>
+              <Pressable onPress={() => setMenuVisible(true)}>
+                <MaterialIcons 
+                  name="menu" 
+                  size={28} 
+                  color={COLORS.navText} 
+                />
               </Pressable>
-            ))}
-          </View>
+            </View>
+          )}
 
-          {/* Logout Button on the Right */}
-          <View style={styles.logoutContainer}>
-            {isLoggedIn && (
-              <Pressable 
-                onPress={handleLogout} 
-                style={styles.logoutButton}
-              >
-                <MaterialIcons 
-                  name="logout" 
-                  size={24} 
-                  color={COLORS.navText} 
-                />
-              </Pressable>
-            )}
-            
-            {/* Show Admin Panel if user is admin */}
-            {isAdmin && (
-              <Pressable 
-                onPress={() => router.push('/admin' as any)} 
-                style={styles.adminButton}
-              >
-                <MaterialIcons 
-                  name="admin-panel-settings" 
-                  size={24} 
-                  color={COLORS.navText} 
-                />
-              </Pressable>
-            )}
-          </View>
+          {/* Right side buttons - always visible on web, hidden on Android */}
+          {isWeb && (
+            <View style={styles.logoutContainer}>
+              {isLoggedIn && (
+                <Pressable 
+                  onPress={handleLogout} 
+                  style={styles.logoutButton}
+                >
+                  <MaterialIcons 
+                    name="logout" 
+                    size={24} 
+                    color={COLORS.navText} 
+                  />
+                </Pressable>
+              )}
+              
+              {/* Show Admin Panel if user is admin */}
+              {isAdmin && (
+                <Pressable 
+                  onPress={() => router.push('/admin')} 
+                  style={styles.adminButton}
+                >
+                  <MaterialIcons 
+                    name="admin-panel-settings" 
+                    size={24} 
+                    color={COLORS.navText} 
+                  />
+                </Pressable>
+              )}
+            </View>
+          )}
         </View>
       )}
+      
+      {/* Android dropdown menu */}
+      {!isWeb && renderAndroidMenu()}
       
       <View style={styles.content}>
         <Slot />
@@ -262,11 +381,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderBottomWidth: 0, 
     borderColor: 'transparent',
-    // Added for iOS to ensure proper safe area handling
     paddingTop: Platform.OS === 'ios' ? 44 : 12,
   },
   logoContainer: {
-    flex: 1,
+    flex: Platform.OS === 'web' ? 1 : 2,
     alignItems: 'flex-start',
   },
   logo: {
@@ -280,6 +398,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.navText,
   },
+  // For Web
   routesContainer: {
     flex: 2,
     flexDirection: 'row',
@@ -309,6 +428,60 @@ const styles = StyleSheet.create({
   },
   adminButton: {
     padding: 8,
+  },
+  // For Android
+  mobileMenuButton: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: COLORS.modalOverlay,
+    justifyContent: 'flex-start',
+  },
+  modalContainer: {
+    backgroundColor: COLORS.modalBackground,
+    width: '80%',
+    maxWidth: 300,
+    height: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.modalDivider,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.navText,
+  },
+  modalItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.modalDivider,
+  },
+  activeModalItem: {
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+  },
+  modalItemText: {
+    fontSize: 16,
+    marginLeft: 16,
+    color: COLORS.navText,
+  },
+  modalDivider: {
+    height: 1,
+    backgroundColor: COLORS.modalDivider,
+    marginVertical: 8,
   },
   content: {
     flex: 1,
