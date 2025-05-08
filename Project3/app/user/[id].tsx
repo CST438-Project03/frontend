@@ -3,6 +3,10 @@ import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Image } from 're
 import { useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
+import { TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+
 
 export default function UserProfile() {
   const { id } = useLocalSearchParams();
@@ -72,6 +76,10 @@ export default function UserProfile() {
   return (
     <LinearGradient colors={['#3a1c71', '#d76d77', '#ffaf7b']} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+
         <View style={styles.profileContainer}>
           <Image
             source={{ uri: user.profilePicture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}` }}
@@ -139,4 +147,13 @@ const styles = StyleSheet.create({
   reviewComment: { fontSize: 14, fontStyle: 'italic', color: '#3a1c71' },
   emptyText: { fontSize: 16, color: '#999', fontStyle: 'italic' },
   errorText: { fontSize: 18, color: 'red' },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 10,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    padding: 8,
+    borderRadius: 20,
+  }
 });
