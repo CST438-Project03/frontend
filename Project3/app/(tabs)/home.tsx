@@ -1,20 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Image, 
-  TouchableOpacity, 
-  Dimensions, 
-  FlatList, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+  FlatList,
+  ScrollView,
   ActivityIndicator,
   Platform,
   SafeAreaView
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define types
 type Game = {
@@ -56,7 +57,7 @@ export default function HomeScreen() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const gamesPerPage = 18; // 6 games per row, 3 rows per page
   const router = useRouter();
 
@@ -64,7 +65,7 @@ export default function HomeScreen() {
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         // Fetch games
         const gamesResponse = await fetch(
@@ -76,7 +77,7 @@ export default function HomeScreen() {
         const gamesData = await gamesResponse.json();
         setGames(gamesData.games || []);
         setTotalPages(gamesData.totalPages || 1);
-        
+
         // Fetch recent reviews
         const reviewsResponse = await fetch('https://cst438-project3-2224023aed89.herokuapp.com/public/reviews/recent');
         if (!reviewsResponse.ok) {
@@ -84,13 +85,18 @@ export default function HomeScreen() {
         }
         const reviewsData = await reviewsResponse.json();
         setReviews(reviewsData.reviews || []);
-        
+
         // Fetch user lists (if authenticated)
         try {
+          const token = await AsyncStorage.getItem('jwtToken'); // or localStorage on web
+
           const listsResponse = await fetch('https://cst438-project3-2224023aed89.herokuapp.com/api/lists/getUserLists', {
-            credentials: 'include', // Include cookies for authentication
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           });
-          
+
           if (listsResponse.ok) {
             const listsData = await listsResponse.json();
             setUserLists(listsData.lists || []);
@@ -126,9 +132,9 @@ export default function HomeScreen() {
       style={styles.reviewCard}
       onPress={() => router.push(`/game/${item.videoGame.rawgId}`)}
     >
-      <Image 
-        source={{ uri: item.videoGame.imageUrl }} 
-        style={styles.reviewGameImage} 
+      <Image
+        source={{ uri: item.videoGame.imageUrl }}
+        style={styles.reviewGameImage}
       />
       <View style={styles.reviewContent}>
         <Text style={styles.reviewGameTitle}>{item.videoGame.title}</Text>
@@ -157,13 +163,13 @@ export default function HomeScreen() {
         <Text style={styles.listTitle}>{item.name}</Text>
         <Text style={styles.listGameCount}>{item.games.length} games</Text>
       </View>
-      
+
       <View style={styles.listThumbnails}>
         {item.games.slice(0, 3).map((game, index) => (
-          <Image 
+          <Image
             key={index}
-            source={{ uri: game.imageUrl }} 
-            style={styles.listThumbnail} 
+            source={{ uri: game.imageUrl }}
+            style={styles.listThumbnail}
           />
         ))}
         {item.games.length > 3 && (
@@ -177,8 +183,8 @@ export default function HomeScreen() {
 
   const getPaginationRange = () => {
     const range = [];
-    const start = Math.max(1, currentPage - 2); 
-    const end = Math.min(totalPages, currentPage + 2); 
+    const start = Math.max(1, currentPage - 2);
+    const end = Math.min(totalPages, currentPage + 2);
     for (let i = start; i <= end; i++) {
       range.push(i);
     }
@@ -212,7 +218,7 @@ export default function HomeScreen() {
         <ScrollView style={styles.scrollView}>
           <View style={styles.container}>
             <Text style={styles.title}>Welcome to GameStack!</Text>
-            
+
             {/* Featured Games Section */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Featured Games</Text>
@@ -221,14 +227,14 @@ export default function HomeScreen() {
                   data={games}
                   renderItem={renderGameItem}
                   keyExtractor={(item) => item.rawgId}
-                  numColumns={Platform.OS === 'web' ? 6 : 3} 
-                  scrollEnabled={false} 
+                  numColumns={Platform.OS === 'web' ? 6 : 3}
+                  scrollEnabled={false}
                   contentContainerStyle={styles.gamesContainer}
                 />
               ) : (
                 <Text style={styles.noContentText}>No games available</Text>
               )}
-              
+
               <View style={styles.paginationContainer}>
                 <View style={styles.paginationButtons}>
                   {getPaginationRange().map((page) => (
@@ -250,23 +256,23 @@ export default function HomeScreen() {
                 </View>
               </View>
             </View>
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Recent Reviews</Text>
-                {isLoading ? (
-                  <ActivityIndicator size="large" color="#fff" />
-                ) : reviews.length > 0 ? (
-                  <FlatList
-                    data={reviews}
-                    renderItem={renderReviewItem}
-                    keyExtractor={(item) => item.id.toString()}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.reviewsContainer}
-                  />
-                ) : (
-                  <Text style={styles.noContentText}>No reviews yet</Text>
-                )}
-              </View>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Recent Reviews</Text>
+              {isLoading ? (
+                <ActivityIndicator size="large" color="#fff" />
+              ) : reviews.length > 0 ? (
+                <FlatList
+                  data={reviews}
+                  renderItem={renderReviewItem}
+                  keyExtractor={(item) => item.id.toString()}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.reviewsContainer}
+                />
+              ) : (
+                <Text style={styles.noContentText}>No reviews yet</Text>
+              )}
+            </View>
             {/* User Lists Section - Only shown if user is logged in and has lists */}
             {userLists.length > 0 && (
               <View style={styles.section}>
