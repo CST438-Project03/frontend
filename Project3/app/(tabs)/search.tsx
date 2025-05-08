@@ -41,7 +41,7 @@ export default function SearchScreen() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const BASE_URL = 'https://cst438-project3-2224023aed89.herokuapp.com/api/games/search';
+  const BASE_URL = 'https://cst438-project3-2224023aed89.herokuapp.com';
 
   const fetchResults = async (searchText: string) => {
     if (!searchText) return;

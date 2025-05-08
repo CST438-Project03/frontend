@@ -33,7 +33,7 @@ export default function Layout() {
   // API URL based on platform
   const isWeb: boolean = Platform.OS === 'web';
   const API_URL: string = isWeb 
-    ? 'http://localhost:8080' 
+    ? 'https://cst438-project3-2224023aed89.herokuapp.com/api'
     : 'http://10.0.2.2:8080';
 
   // Navigation items
