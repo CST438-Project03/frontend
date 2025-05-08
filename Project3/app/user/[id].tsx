@@ -18,15 +18,15 @@ export default function UserProfile() {
         if (!token) throw new Error('Authentication token is missing');
 
         const [userResponse, listsResponse, reviewsResponse] = await Promise.all([
-          fetch(`http://localhost:8080/api/user/${id}`, {
+          fetch(`https://cst438-project3-2224023aed89.herokuapp.com/api/user/${id}`, {
             method: 'GET',
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch(`http://localhost:8080/api/lists/getUserLists`, {
+          fetch(`https://cst438-project3-2224023aed89.herokuapp.com/api/lists/getUserLists`, {
             method: 'GET',
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch(`http://localhost:8080/api/reviews/all/user`, {
+          fetch(`https://cst438-project3-2224023aed89.herokuapp.com/api/reviews/all/user`, {
             method: 'GET',
             headers: { Authorization: `Bearer ${token}` },
           }),
