@@ -133,7 +133,7 @@ const CreateAccount: React.FC = () => {
       };
       
       // Use the correct endpoint that matches your security configuration
-      const endpoint = 'api/auth/register'; // This should match the allowed path in your security config
+      const endpoint = '/api/auth/register'; // This should match the allowed path in your security config
       console.log("Sending request to:", `${API_URL}${endpoint}`);
       
       // Important: Don't use credentials: 'include' to avoid CORS preflight issues
