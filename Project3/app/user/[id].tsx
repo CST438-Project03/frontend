@@ -76,7 +76,7 @@ export default function UserProfile() {
   return (
     <LinearGradient colors={['#3a1c71', '#d76d77', '#ffaf7b']} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+      <TouchableOpacity onPress={() => router.push('/(tabs)/search')} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
 
