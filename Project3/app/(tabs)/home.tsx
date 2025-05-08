@@ -116,16 +116,24 @@ export default function HomeScreen() {
     fetchData();
   }, [currentPage]);
 
-  const renderGameItem = ({ item }: { item: Game }) => (
-    <TouchableOpacity
-      key={item.rawgId}
-      style={styles.gameCard}
-      onPress={() => router.push(`/game/${item.rawgId}`)}
-    >
-      <Image source={{ uri: item.imageUrl }} style={styles.gameImage} />
-      <Text style={styles.gameTitle}>{item.title}</Text>
-    </TouchableOpacity>
-  );
+  const renderGameItem = ({ item }: { item: Game }) => {
+    // Add defensive checks for undefined or null values
+    if (!item) {
+      console.warn('Received undefined item in renderGameItem');
+      return null;
+    }
+
+    return (
+      <TouchableOpacity
+        key={item.rawgId || 'unknown'}
+        style={styles.gameCard}
+        onPress={() => item.rawgId ? router.push(`/game/${item.rawgId}`) : null}
+      >
+        <Image source={{ uri: item.imageUrl || 'https://via.placeholder.com/150' }} style={styles.gameImage} />
+        <Text style={styles.gameTitle}>{item.title || 'Unknown Game'}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   const renderReviewItem = ({ item }: { item: Review }) => (
     <TouchableOpacity
