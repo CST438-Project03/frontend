@@ -28,7 +28,9 @@ export default function SearchScreen() {
     try {
       const response = await fetch(`${BASE_URL}?query=${encodeURIComponent(searchText)}`);
       const data = await response.json();
-      setGames((prevGames) => [...prevGames, ...data]);
+      //setGames((prevGames) => [...prevGames, ...data]);
+      setGames(data);
+
     } catch (error) {
       console.error('Search error:', error);
     }
